@@ -27,6 +27,8 @@ const responseSchema = {
     },
 };
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const findBusinesses = async (province: string, district: string, mainCategory: string, subCategory: string): Promise<Business[]> => {
     const prompt = `
         You are a local business directory expert for Turkey. Your task is to find and list ALL businesses matching the specified criteria from Google's data.
@@ -50,28 +52,48 @@ export const findBusinesses = async (province: string, district: string, mainCat
         Return ONLY the JSON array of business objects. Do not include any other text, explanation, or markdown formatting.
     `;
 
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: responseSchema,
-            },
-        });
+    const MAX_RETRIES = 3;
+    let attempt = 0;
 
-        const text = response.text.trim();
-        const data = JSON.parse(text);
+    while (attempt < MAX_RETRIES) {
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: 'application/json',
+                    responseSchema: responseSchema,
+                },
+            });
 
-        if (Array.isArray(data)) {
-            return data as Business[];
+            const text = response.text.trim();
+            const data = JSON.parse(text);
+
+            if (Array.isArray(data)) {
+                return data as Business[];
+            }
+            
+            console.error("Gemini response is not a JSON array:", data);
+            throw new Error("API'den beklenmedik bir formatta veri alındı.");
+
+        } catch (error: any) {
+            const errorMessage = error.toString();
+            const isRateLimitError = errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED');
+
+            if (isRateLimitError && attempt < MAX_RETRIES - 1) {
+                attempt++;
+                const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
+                console.warn(`Rate limit exceeded. Retrying in ${Math.round(delay / 1000)} seconds... (Attempt ${attempt})`);
+                await sleep(delay);
+            } else {
+                console.error("Error fetching businesses from Gemini API:", error);
+                if (isRateLimitError) {
+                    throw new Error("API kota limitini aştınız. Lütfen birkaç dakika bekleyip tekrar deneyin.");
+                }
+                throw new Error("İşletme verileri alınamadı. Lütfen API anahtarınızı ve ağ bağlantınızı kontrol edin.");
+            }
         }
-        
-        console.error("Gemini response is not a JSON array:", data);
-        return [];
-
-    } catch (error) {
-        console.error("Error fetching businesses from Gemini API:", error);
-        throw new Error("Failed to fetch business data. Please check your API key and network connection.");
     }
+
+    throw new Error("Tüm yeniden deneme denemelerinden sonra API'ye ulaşılamadı.");
 };

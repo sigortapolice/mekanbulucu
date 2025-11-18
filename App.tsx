@@ -95,7 +95,18 @@ const App: React.FC = () => {
               <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={MAIN_CATEGORIES} placeholder="Ana Kategori Seçin" />
               <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={subCategoryOptions} placeholder="Alt Kategori Seçin" disabled={!mainCategory} />
             </div>
-             {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
+            {error && (
+                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md text-center">
+                    <p className="text-sm font-medium text-red-800">{error}</p>
+                    {error.includes("kota") && (
+                        <p className="mt-2 text-xs text-red-700">
+                            Bu durum genellikle ücretsiz kullanım katmanındaki istek limitlerinden kaynaklanır. 
+                            <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900"> Oran limitleri</a> hakkında daha fazla bilgi alabilir 
+                            veya <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900">kullanımınızı buradan</a> izleyebilirsiniz.
+                        </p>
+                    )}
+                </div>
+            )}
             <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button onClick={handleSearch} disabled={isSearchDisabled || loading} Icon={SearchIcon}>
                 {loading ? 'Aranıyor...' : 'Bul'}
