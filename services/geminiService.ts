@@ -32,26 +32,29 @@ const getAiClient = (apiKey: string) => {
 
 export const findBusinesses = async (apiKey: string, province: string, district: string, mainCategory: string, subCategory: string): Promise<Business[]> => {
     const prompt = `
-        You are a local business directory expert for Turkey. Your task is to find and list businesses matching the specified criteria using Google's data.
+        **ROLE:** You are a data retrieval API. Your only function is to query Google's internal business data and return the raw results as a JSON array.
 
-        Find businesses in the '${district}' district of '${province}', Turkey that match the following categories:
+        **QUERY PARAMETERS:**
+        - Location: District '${district}', Province '${province}', Turkey.
         - Main Category: '${mainCategory}'
         - Sub-category: '${subCategory}'
 
-        IMPORTANT: Your response MUST be a JSON array and should contain a comprehensive list of ALL businesses that match.
+        **CRITICAL EXECUTION DIRECTIVES:**
+        1.  **NO INTERPRETATION:** Do not interpret the data. Do not summarize. Do not add any commentary or explanations. Your output must be data-only.
+        2.  **COMPLETE DATASET:** Retrieve EVERY SINGLE business that matches the query parameters. If 5000 businesses match, the output JSON array MUST contain 5000 objects. Do not truncate, sample, or omit any entry for any reason.
+        3.  **RAW DATA MAPPING:** Map the raw data fields from Google Maps directly to the specified JSON schema. Do not alter or rephrase any information (business name, address, etc.).
+        4.  **STRICT OUTPUT FORMAT:** The response MUST be ONLY a valid JSON array. Nothing else. No markdown, no introductory text, no "Here is the list...". Just the JSON.
 
-        For each business found, provide the following information in the specified JSON format:
-        - businessName: The full name of the business.
-        - mainCategory: The main business category.
-        - subCategory: The specific sub-category.
-        - phone: The contact phone number. If unavailable, use null.
-        - district: The district (ilçe).
-        - neighborhood: The neighborhood (mahalle).
-        - address: The full, complete address.
-        - googleRating: The Google Maps rating as a number (e.g., 4.5). If unavailable, use null.
-        - googleMapsLink: The full URL for the business on Google Maps.
-
-        Return ONLY the JSON array of business objects. Do not include any other text, explanation, or markdown formatting.
+        **JSON SCHEMA FOR EACH OBJECT:**
+        - businessName: string (Unmodified name from Google Maps)
+        - mainCategory: string
+        - subCategory: string
+        - phone: string | null
+        - district: string
+        - neighborhood: string
+        - address: string (Unmodified address from Google Maps)
+        - googleRating: number | null
+        - googleMapsLink: string (Direct URL from Google Maps)
     `;
 
     const MAX_RETRIES = 3;
