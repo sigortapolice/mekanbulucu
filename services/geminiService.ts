@@ -23,41 +23,45 @@ export const findBusinessesStream = async ({
     onError,
 }: StreamCallbacks) => {
     const prompt = `
-        **Command:** Perform an exhaustive search and stream all results.
+        You are a data extraction robot. Your ONLY task is to use the Google Maps tool to find businesses and format the results as structured JSON.
 
-        **Search Criteria:**
-        - Location: District '${district}', Province '${province}', Turkey.
-        - Business Category: '${mainCategory}'
-        - Business Sub-category: '${subCategory}'
+        **Search Query:** Find all '${subCategory}' businesses in '${district}, ${province}' using the Google Maps tool.
 
-        **ABSOLUTE REQUIREMENT: COMPLETE AND UNALTERED DATA STREAM**
-        1.  **Exhaustive Search:** You MUST perform a deep and exhaustive search of all available Google Maps data for the specified location and category. Finding only 5-10 results for a common category in a large district is considered a failure. The expectation is a complete list, even if it contains hundreds or thousands of entries.
-        2.  **Raw Data ONLY:** The data for each business (name, address, etc.) MUST be returned exactly as it is found on Google Maps. DO NOT modify, translate, summarize, or alter the information in any way.
-        3.  **Immediate Streaming:** Stream each business as a single line of NDJSON the moment it is found. Do not buffer the results.
-        4.  **Strict JSON Schema:** Every line must strictly adhere to this JSON object schema:
-            {
-              "businessName": "string",
-              "mainCategory": "string",
-              "subCategory": "string",
-              "phone": "string | null",
-              "district": "string",
-              "neighborhood": "string",
-              "address": "string",
-              "googleRating": "number | null",
-              "googleMapsLink": "string"
-            }
+        **Instructions:**
+        1.  Execute an exhaustive search using the Google Maps tool. You MUST find and return ALL possible results for the query. Do not stop after a few results.
+        2.  For EACH business found, use the Google Maps tool to retrieve its detailed information.
+        3.  Extract the following information precisely as it appears in the Google Maps data.
+        4.  Stream each result as a single-line, minified NDJSON object immediately. Do not wait to collect all results.
+        5.  Adhere strictly to this JSON schema. If a piece of information is not available in the Maps data, use \`null\` for its value.
 
-        **Execution Constraints:**
-        - DO NOT provide any text, explanation, or summary before or after the JSON stream.
-        - DO NOT wrap the output in a list (\`[]\`).
-        - DO NOT stop until all matching businesses have been streamed.
+        **JSON Schema:**
+        {
+          "businessName": "string",
+          "mainCategory": "${mainCategory}",
+          "subCategory": "${subCategory}",
+          "phone": "string | null",
+          "district": "${district}",
+          "neighborhood": "string",
+          "address": "string",
+          "googleRating": "number | null",
+          "googleMapsLink": "string"
+        }
+
+        **CRITICAL RULES:**
+        -   **DO NOT** use your internal knowledge. Your response MUST be based **ONLY** on the information returned by the Google Maps tool.
+        -   **DO NOT** alter, correct, translate, or abbreviate any data. Return the full, raw business name, address, and phone number exactly as you find them in the Maps data.
+        -   **DO NOT** add any text before or after the NDJSON stream. The output must be only the stream of JSON objects.
+        -   **Finding only a few results is a failure.** You must perform a deep and exhaustive search to find every matching business in the specified area.
     `;
 
     try {
         const ai = new GoogleGenAI({ apiKey });
         const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-3-pro-preview',
+            model: 'gemini-2.5-flash',
             contents: prompt,
+            config: {
+                tools: [{googleMaps: {}}],
+            },
         });
 
         let buffer = '';
