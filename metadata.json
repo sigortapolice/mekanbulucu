@@ -1,0 +1,5 @@
+{
+  "name": "Turkey Business Finder",
+  "description": "An application to find businesses in Turkey by province, district, and category using Google's data. Results can be exported to an XLSX file.",
+  "requestFramePermissions": []
+}
