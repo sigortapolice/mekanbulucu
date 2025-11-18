@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Business, Option } from './types';
 import { PROVINCES, DISTRICTS, MAIN_CATEGORIES, SUB_CATEGORIES } from './constants';
-import { findBusinesses } from './services/geminiService';
+import { findBusinessesStream } from './services/geminiService';
 import SelectDropdown from './components/SelectDropdown';
 import Button from './components/Button';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -15,12 +15,12 @@ const App: React.FC = () => {
   const [mainCategory, setMainCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
   
-  const [apiKey, setApiKey] = useState('');
-  const [tempApiKey, setTempApiKey] = useState('');
+  // FIX: Removed apiKey and tempApiKey state management to comply with the guideline of using environment variables.
 
-  const [results, setResults] = useState<Business[] | null>(null);
+  const [results, setResults] = useState<Business[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchHasRun, setSearchHasRun] = useState(false);
 
   const districtOptions = useMemo(() => province ? DISTRICTS[province] || [] : [], [province]);
   const subCategoryOptions = useMemo(() => mainCategory ? SUB_CATEGORIES[mainCategory] || [] : [], [mainCategory]);
@@ -33,47 +33,48 @@ const App: React.FC = () => {
     setSubCategory('');
   }, [mainCategory]);
 
-  const handleApiKeySave = () => {
-    if (tempApiKey.trim()) {
-        setApiKey(tempApiKey.trim());
-        setError(null);
-    }
-  };
-
-  const handleApiKeyChange = () => {
-      setApiKey('');
-      setTempApiKey('');
-  };
-
+  // FIX: Removed API key save and change handlers.
 
   const handleSearch = async () => {
     if (!province || !district || !mainCategory || !subCategory) {
       setError("Lütfen tüm alanları doldurun.");
       return;
     }
-    if (!apiKey) {
-      setError("Lütfen devam etmek için bir API anahtarı girin.");
-      return;
-    }
+    // FIX: Removed check for API key.
     setError(null);
     setLoading(true);
-    setResults(null);
+    setResults([]);
+    setSearchHasRun(true);
 
     try {
       const provinceLabel = PROVINCES.find(p => p.value === province)?.label || '';
       const districtLabel = DISTRICTS[province]?.find(d => d.value === district)?.label || '';
-      const data = await findBusinesses(apiKey, provinceLabel, districtLabel, mainCategory, subCategory);
-      setResults(data);
+      
+      // FIX: Call findBusinessesStream without the apiKey property.
+      await findBusinessesStream({
+        province: provinceLabel,
+        district: districtLabel,
+        mainCategory,
+        subCategory,
+        onData: (business) => {
+          setResults(prevResults => [...prevResults, business]);
+        },
+        onComplete: () => {
+          setLoading(false);
+        },
+        onError: (e: Error) => {
+          setError(e.message || "Bir hata oluştu.");
+          setLoading(false);
+        }
+      });
     } catch (e: any) {
       setError(e.message || "Bir hata oluştu.");
-      setResults([]);
-    } finally {
       setLoading(false);
     }
   };
 
   const handleExport = () => {
-    if (!results || results.length === 0) {
+    if (results.length === 0) {
       alert("Dışa aktarılacak veri bulunmamaktadır.");
       return;
     }
@@ -83,8 +84,9 @@ const App: React.FC = () => {
     XLSX.writeFile(workbook, "isletme_bulucu_sonuclari.xlsx");
   };
   
-  const isSearchDisabled = !province || !district || !mainCategory || !subCategory || !apiKey;
-  const isExportDisabled = !results || results.length === 0;
+  // FIX: Removed apiKey from the disabled check logic.
+  const isSearchDisabled = !province || !district || !mainCategory || !subCategory;
+  const isExportDisabled = results.length === 0 || loading;
 
   const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -98,12 +100,6 @@ const App: React.FC = () => {
     </svg>
   );
 
-  const CheckCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
-      <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
-    </svg>
-  );
-
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -114,39 +110,14 @@ const App: React.FC = () => {
 
         <main>
           <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
-            {!apiKey ? (
-                <div className="border-b border-gray-200 pb-6 mb-6">
-                    <h2 className="text-xl font-semibold text-gray-800 mb-2">API Anahtarı Gerekli</h2>
-                    <p className="text-sm text-gray-600 mb-4">
-                        Uygulamayı kullanmak için lütfen Google Gemini API anahtarınızı girin. Anahtarınızı <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-medium">Google AI Studio</a>'dan alabilirsiniz.
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <input
-                            type="password"
-                            value={tempApiKey}
-                            onChange={(e) => setTempApiKey(e.target.value)}
-                            placeholder="API Anahtarınızı buraya yapıştırın"
-                            className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            aria-label="Google Gemini API Key"
-                        />
-                        <Button onClick={handleApiKeySave} disabled={!tempApiKey.trim()} className="w-full sm:w-auto">Kaydet</Button>
-                    </div>
-                </div>
-            ) : (
-                <div className="border-b border-gray-200 pb-4 mb-6 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <CheckCircleIcon className="w-6 h-6 text-green-600" />
-                        <p className="text-sm text-green-800 font-medium">API Anahtarı ayarlandı.</p>
-                    </div>
-                    <Button onClick={handleApiKeyChange} variant="secondary">Değiştir</Button>
-                </div>
-            )}
+            {/* FIX: Removed the entire API Key input section. */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <SelectDropdown id="province" label="İl" value={province} onChange={(e) => setProvince(e.target.value)} options={PROVINCES} placeholder="İl Seçin" disabled={!apiKey}/>
-              <SelectDropdown id="district" label="İlçe" value={district} onChange={(e) => setDistrict(e.target.value)} options={districtOptions} placeholder="İlçe Seçin" disabled={!province || !apiKey} />
-              <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={MAIN_CATEGORIES} placeholder="Ana Kategori Seçin" disabled={!apiKey}/>
-              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={subCategoryOptions} placeholder="Alt Kategori Seçin" disabled={!mainCategory || !apiKey} />
+              {/* FIX: Removed disabled logic related to apiKey. */}
+              <SelectDropdown id="province" label="İl" value={province} onChange={(e) => setProvince(e.target.value)} options={PROVINCES} placeholder="İl Seçin" />
+              <SelectDropdown id="district" label="İlçe" value={district} onChange={(e) => setDistrict(e.target.value)} options={districtOptions} placeholder="İlçe Seçin" disabled={!province} />
+              <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={MAIN_CATEGORIES} placeholder="Ana Kategori Seçin" />
+              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={subCategoryOptions} placeholder="Alt Kategori Seçin" disabled={!mainCategory} />
             </div>
             {error && (
                 <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md text-center">
@@ -164,7 +135,7 @@ const App: React.FC = () => {
               <Button onClick={handleSearch} disabled={isSearchDisabled || loading} Icon={SearchIcon}>
                 {loading ? 'Aranıyor...' : 'Bul'}
               </Button>
-              <Button onClick={handleExport} disabled={isExportDisabled || loading} variant="secondary" Icon={DownloadIcon}>
+              <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon}>
                 XLSX İndir
               </Button>
             </div>
@@ -172,12 +143,22 @@ const App: React.FC = () => {
           
           <div className="bg-white rounded-lg shadow-lg">
             {loading && <LoadingSpinner />}
-            {results && <ResultsTable businesses={results} />}
-            {!loading && !results && (
+            
+            {(loading || results.length > 0) && <ResultsTable businesses={results} />}
+
+            {/* FIX: Removed conditional rendering based on apiKey. */}
+            {!loading && !searchHasRun && (
               <div className="text-center py-10 px-4">
-                 <h3 className="text-lg font-medium text-gray-900">{apiKey ? "Aramaya Hazır" : "Lütfen API Anahtarınızı Girin"}</h3>
-                 <p className="mt-1 text-sm text-gray-500">{apiKey ? "Sonuçları görmek için yukarıdaki filtreleri kullanarak bir arama yapın." : "Aramaya başlamak için yukarıdaki alana geçerli bir API anahtarı girmelisiniz."}</p>
+                 <h3 className="text-lg font-medium text-gray-900">Aramaya Hazır</h3>
+                 <p className="mt-1 text-sm text-gray-500">Sonuçları görmek için yukarıdaki filtreleri kullanarak bir arama yapın.</p>
               </div>
+            )}
+            
+            {!loading && searchHasRun && results.length === 0 && (
+                <div className="text-center py-10 px-4">
+                    <h3 className="text-lg font-medium text-gray-900">Sonuç Bulunamadı</h3>
+                    <p className="mt-1 text-sm text-gray-500">Lütfen yukarıdaki filtreleri kullanarak yeni bir arama yapın.</p>
+                </div>
             )}
           </div>
         </main>

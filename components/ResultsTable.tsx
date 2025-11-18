@@ -13,15 +13,6 @@ const StarIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 
 const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
-  if (businesses.length === 0) {
-    return (
-      <div className="text-center py-10 px-4">
-        <h3 className="text-lg font-medium text-gray-900">Sonuç Bulunamadı</h3>
-        <p className="mt-1 text-sm text-gray-500">Lütfen yukarıdaki filtreleri kullanarak yeni bir arama yapın.</p>
-      </div>
-    );
-  }
-
   return (
     <div>
       <div className="p-4 border-b border-gray-200 bg-gray-50/50 sm:rounded-t-lg">
