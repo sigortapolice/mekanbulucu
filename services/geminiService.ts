@@ -31,31 +31,34 @@ export const findBusinessesStream = async ({
     onError,
 }: StreamCallbacks) => {
     const prompt = `
-        **ROLE:** You are a data retrieval API. Your only function is to query Google's internal business data and return the raw results as a stream of JSON objects.
+        **Command:** Perform an exhaustive search and stream all results.
 
-        **QUERY PARAMETERS:**
+        **Search Criteria:**
         - Location: District '${district}', Province '${province}', Turkey.
-        - Main Category: '${mainCategory}'
-        - Sub-category: '${subCategory}'
+        - Business Category: '${mainCategory}'
+        - Business Sub-category: '${subCategory}'
 
-        **CRITICAL EXECUTION DIRECTIVES:**
-        1.  **NO INTERPRETATION:** Do not interpret the data. Do not summarize. Do not add any commentary or explanations.
-        2.  **COMPLETE DATASET:** Retrieve EVERY SINGLE business that matches the query parameters. Stream every single entry you find immediately. Do not wait to complete the full list before starting the stream.
-        3.  **RAW DATA MAPPING:** Map the raw data fields from Google Maps directly to the JSON format below. Do not alter or rephrase any information.
-        4.  **STRICT OUTPUT FORMAT:** The response MUST be ONLY a stream of valid JSON objects, one per line (Newline Delimited JSON - NDJSON). Each line must be a complete JSON object. Do not wrap the output in a JSON array (\`[]\`) or use commas between lines.
+        **ABSOLUTE REQUIREMENT: COMPLETE AND UNALTERED DATA STREAM**
+        1.  **Exhaustive Search:** You MUST perform a deep and exhaustive search of all available Google Maps data for the specified location and category. Finding only 5-10 results for a common category in a large district is considered a failure. The expectation is a complete list, even if it contains hundreds or thousands of entries.
+        2.  **Raw Data ONLY:** The data for each business (name, address, etc.) MUST be returned exactly as it is found on Google Maps. DO NOT modify, translate, summarize, or alter the information in any way.
+        3.  **Immediate Streaming:** Stream each business as a single line of NDJSON the moment it is found. Do not buffer the results.
+        4.  **Strict JSON Schema:** Every line must strictly adhere to this JSON object schema:
+            {
+              "businessName": "string",
+              "mainCategory": "string",
+              "subCategory": "string",
+              "phone": "string | null",
+              "district": "string",
+              "neighborhood": "string",
+              "address": "string",
+              "googleRating": "number | null",
+              "googleMapsLink": "string"
+            }
 
-        **JSON SCHEMA FOR EACH LINE (EACH OBJECT):**
-        {
-          "businessName": "string (Unmodified name from Google Maps)",
-          "mainCategory": "string",
-          "subCategory": "string",
-          "phone": "string | null",
-          "district": "string",
-          "neighborhood": "string",
-          "address": "string (Unmodified address from Google Maps)",
-          "googleRating": "number | null",
-          "googleMapsLink": "string (Direct URL from Google Maps)"
-        }
+        **Execution Constraints:**
+        - DO NOT provide any text, explanation, or summary before or after the JSON stream.
+        - DO NOT wrap the output in a list (\`[]\`).
+        - DO NOT stop until all matching businesses have been streamed.
     `;
 
     try {
