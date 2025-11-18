@@ -56,7 +56,7 @@ export const findBusinessesStream = async ({
     try {
         const ai = new GoogleGenAI({ apiKey });
         const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-pro-preview',
             contents: prompt,
         });
 
