@@ -1,12 +1,5 @@
-
 import { GoogleGenAI, Type } from '@google/genai';
 import type { Business } from '../types';
-
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable is not set.");
-}
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const responseSchema = {
     type: Type.ARRAY,
@@ -28,6 +21,14 @@ const responseSchema = {
 };
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const getAiClient = () => {
+    if (!process.env.API_KEY) {
+        throw new Error("API Anahtarı (API_KEY) ayarlanmamış. Lütfen dağıtım ortamınızdaki (örneğin Vercel) ortam değişkenlerini kontrol edin.");
+    }
+    return new GoogleGenAI({ apiKey: process.env.API_KEY });
+};
+
 
 export const findBusinesses = async (province: string, district: string, mainCategory: string, subCategory: string): Promise<Business[]> => {
     const prompt = `
@@ -57,6 +58,8 @@ export const findBusinesses = async (province: string, district: string, mainCat
 
     while (attempt < MAX_RETRIES) {
         try {
+            const ai = getAiClient();
+
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
@@ -90,7 +93,8 @@ export const findBusinesses = async (province: string, district: string, mainCat
                 if (isRateLimitError) {
                     throw new Error("API kota limitini aştınız. Lütfen birkaç dakika bekleyip tekrar deneyin.");
                 }
-                throw new Error("İşletme verileri alınamadı. Lütfen API anahtarınızı ve ağ bağlantınızı kontrol edin.");
+                // Re-throw the original error to preserve the specific message (e.g., API key missing).
+                throw error;
             }
         }
     }
