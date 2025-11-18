@@ -22,22 +22,23 @@ const responseSchema = {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const getAiClient = () => {
-    if (!process.env.API_KEY) {
-        throw new Error("API Anahtarı (API_KEY) ayarlanmamış. Lütfen dağıtım ortamınızdaki (örneğin Vercel) ortam değişkenlerini kontrol edin.");
+const getAiClient = (apiKey: string) => {
+    if (!apiKey) {
+        throw new Error("API Anahtarı (API_KEY) sağlanmadı.");
     }
-    return new GoogleGenAI({ apiKey: process.env.API_KEY });
+    return new GoogleGenAI({ apiKey });
 };
 
 
-export const findBusinesses = async (province: string, district: string, mainCategory: string, subCategory: string): Promise<Business[]> => {
+export const findBusinesses = async (apiKey: string, province: string, district: string, mainCategory: string, subCategory: string): Promise<Business[]> => {
     const prompt = `
-        You are a local business directory expert for Turkey. Your task is to find and list ALL businesses matching the specified criteria from Google's data.
-        DO NOT SUMMARIZE, SAMPLE, OR LIMIT THE NUMBER OF RESULTS. If a category in a district has hundreds of businesses, you MUST list all of them. This is a critical instruction.
+        You are a local business directory expert for Turkey. Your task is to find and list businesses matching the specified criteria using Google's data.
 
-        Find all businesses in the '${district}', '${province}' district of Turkey that match the following categories:
+        Find businesses in the '${district}' district of '${province}', Turkey that match the following categories:
         - Main Category: '${mainCategory}'
         - Sub-category: '${subCategory}'
+
+        IMPORTANT: Your response MUST be a JSON array and should contain a comprehensive list of ALL businesses that match.
 
         For each business found, provide the following information in the specified JSON format:
         - businessName: The full name of the business.
@@ -58,7 +59,7 @@ export const findBusinesses = async (province: string, district: string, mainCat
 
     while (attempt < MAX_RETRIES) {
         try {
-            const ai = getAiClient();
+            const ai = getAiClient(apiKey);
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -81,6 +82,10 @@ export const findBusinesses = async (province: string, district: string, mainCat
 
         } catch (error: any) {
             const errorMessage = error.toString();
+            if (errorMessage.includes('API key not valid')) {
+                throw new Error('Sağlanan API Anahtarı geçersiz. Lütfen anahtarınızı kontrol edin.');
+            }
+
             const isRateLimitError = errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED');
 
             if (isRateLimitError && attempt < MAX_RETRIES - 1) {
@@ -93,7 +98,7 @@ export const findBusinesses = async (province: string, district: string, mainCat
                 if (isRateLimitError) {
                     throw new Error("API kota limitini aştınız. Lütfen birkaç dakika bekleyip tekrar deneyin.");
                 }
-                // Re-throw the original error to preserve the specific message (e.g., API key missing).
+                // Re-throw the original error to preserve the specific message.
                 throw error;
             }
         }
