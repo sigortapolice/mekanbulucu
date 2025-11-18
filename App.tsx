@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Business, Option } from './types';
-import { PROVINCES, DISTRICTS, MAIN_CATEGORIES, SUB_CATEGORIES } from './constants';
+import { PROVINCES, DISTRICTS, MAIN_CATEGORIES, SUB_CATEGORIES, NEIGHBORHOODS } from './constants';
 import { findBusinessesStream } from './services/geminiService';
 import SelectDropdown from './components/SelectDropdown';
 import Button from './components/Button';
@@ -22,6 +22,8 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchHasRun, setSearchHasRun] = useState(false);
+  const [searchProgress, setSearchProgress] = useState<{ current: number; total: number; neighborhood: string } | null>(null);
+
 
   const districtOptions = useMemo(() => province ? DISTRICTS[province] || [] : [], [province]);
   const subCategoryOptions = useMemo(() => mainCategory ? SUB_CATEGORIES[mainCategory] || [] : [], [mainCategory]);
@@ -61,36 +63,64 @@ const App: React.FC = () => {
       setError("Lütfen geçerli bir API Anahtarı girin.");
       return;
     }
-    setError(null);
+    
     setLoading(true);
     setResults([]);
     setSearchHasRun(true);
+    setError(null);
+    setSearchProgress(null);
 
-    try {
-      const provinceLabel = PROVINCES.find(p => p.value === province)?.label || '';
-      const districtLabel = DISTRICTS[province]?.find(d => d.value === district)?.label || '';
-      
-      await findBusinessesStream({
-        apiKey,
-        province: provinceLabel,
-        district: districtLabel,
-        mainCategory,
-        subCategory,
-        onData: (business) => {
-          setResults(prevResults => [...prevResults, business]);
-        },
-        onComplete: () => {
-          setLoading(false);
-        },
-        onError: (e: Error) => {
-          setError(e.message || "Bir hata oluştu.");
-          setLoading(false);
+    const provinceLabel = PROVINCES.find(p => p.value === province)?.label || '';
+    const districtLabel = DISTRICTS[province]?.find(d => d.value === district)?.label || '';
+    
+    // Use neighborhood list if available, otherwise fall back to a single district-wide search
+    const neighborhoodsToSearch = NEIGHBORHOODS[province]?.[district] || [{ value: district, label: '' }];
+    const totalSearches = neighborhoodsToSearch.length;
+    
+    const uniqueResults = new Map<string, Business>();
+
+    for (let i = 0; i < totalSearches; i++) {
+        const neighborhood = neighborhoodsToSearch[i];
+        const progressNeighborhoodLabel = neighborhood.label || districtLabel;
+
+        setSearchProgress({ current: i + 1, total: totalSearches, neighborhood: progressNeighborhoodLabel });
+
+        try {
+            await findBusinessesStream({
+                apiKey,
+                province: provinceLabel,
+                district: districtLabel,
+                neighborhood: neighborhood.label, // Pass neighborhood label
+                mainCategory,
+                subCategory,
+                onData: (business) => {
+                    // De-duplicate results based on name and address
+                    const key = `${business.businessName}|${business.address}`;
+                    if (!uniqueResults.has(key)) {
+                        uniqueResults.set(key, business);
+                        // Update results in real-time
+                        setResults(Array.from(uniqueResults.values()));
+                    }
+                },
+                onComplete: () => {
+                    // This is called after each neighborhood stream completes
+                },
+                onError: (e: Error) => {
+                    console.error(`Error searching ${neighborhood.label}:`, e);
+                    // Optionally, show a non-fatal error to the user
+                    // For now, we'll let the process continue
+                }
+            });
+        } catch (e: any) {
+             console.error(`Fatal error during search for ${neighborhood.label}:`, e);
+             setError(`Arama sırasında bir hata oluştu (${neighborhood.label}): ${e.message}`);
+             // Decide if we should stop the whole process
+             // For now, we continue to the next neighborhood
         }
-      });
-    } catch (e: any) {
-      setError(e.message || "Bir hata oluştu.");
-      setLoading(false);
     }
+    
+    setLoading(false);
+    setSearchProgress(null);
   };
 
   const handleExport = () => {
@@ -156,10 +186,10 @@ const App: React.FC = () => {
 
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <SelectDropdown id="province" label="İl" value={province} onChange={(e) => setProvince(e.target.value)} options={PROVINCES} placeholder="İl Seçin" disabled={!apiKey}/>
-              <SelectDropdown id="district" label="İlçe" value={district} onChange={(e) => setDistrict(e.target.value)} options={districtOptions} placeholder="İlçe Seçin" disabled={!province || !apiKey} />
-              <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={MAIN_CATEGORIES} placeholder="Ana Kategori Seçin" disabled={!apiKey} />
-              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={subCategoryOptions} placeholder="Alt Kategori Seçin" disabled={!mainCategory || !apiKey} />
+              <SelectDropdown id="province" label="İl" value={province} onChange={(e) => setProvince(e.target.value)} options={PROVINCES} placeholder="İl Seçin" disabled={!apiKey || loading}/>
+              <SelectDropdown id="district" label="İlçe" value={district} onChange={(e) => setDistrict(e.target.value)} options={districtOptions} placeholder="İlçe Seçin" disabled={!province || !apiKey || loading} />
+              <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={MAIN_CATEGORIES} placeholder="Ana Kategori Seçin" disabled={!apiKey || loading} />
+              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={subCategoryOptions} placeholder="Alt Kategori Seçin" disabled={!mainCategory || !apiKey || loading} />
             </div>
             {error && (
                 <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md text-center">
@@ -184,9 +214,9 @@ const App: React.FC = () => {
           </div>
           
           <div className="bg-white rounded-lg shadow-lg">
-            {loading && <LoadingSpinner />}
+            {loading && <LoadingSpinner progressText={searchProgress ? `Aranıyor: ${searchProgress.neighborhood} (${searchProgress.current}/${searchProgress.total})` : undefined} />}
             
-            {(loading || results.length > 0) && <ResultsTable businesses={results} />}
+            {(searchHasRun || results.length > 0) && !loading && <ResultsTable businesses={results} />}
 
             {!loading && !searchHasRun && (
               <div className="text-center py-10 px-4">
@@ -200,7 +230,7 @@ const App: React.FC = () => {
             {!loading && searchHasRun && results.length === 0 && (
                 <div className="text-center py-10 px-4">
                     <h3 className="text-lg font-medium text-gray-900">Sonuç Bulunamadı</h3>
-                    <p className="mt-1 text-sm text-gray-500">Lütfen yukarıdaki filtreleri kullanarak yeni bir arama yapın.</p>
+                    <p className="mt-1 text-sm text-gray-500">Aramanızla eşleşen işletme bulunamadı veya arama sırasında bir hata oluştu. Lütfen filtrelerinizi kontrol edip tekrar deneyin.</p>
                 </div>
             )}
           </div>

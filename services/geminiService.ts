@@ -5,6 +5,7 @@ interface StreamCallbacks {
     apiKey: string;
     province: string;
     district: string;
+    neighborhood: string;
     mainCategory: string;
     subCategory: string;
     onData: (business: Business) => void;
@@ -16,24 +17,29 @@ export const findBusinessesStream = async ({
     apiKey,
     province,
     district,
+    neighborhood,
     mainCategory,
     subCategory,
     onData,
     onComplete,
     onError,
 }: StreamCallbacks) => {
+    const locationQuery = neighborhood 
+        ? `'${neighborhood}, ${district}, ${province}'` 
+        : `'${district}, ${province}'`;
+
     const prompt = `
-        You are a specialized Google Maps data aggregation bot. Your sole, non-negotiable directive is to perform a completely exhaustive search and return EVERY SINGLE matching business from the Google Maps tool.
+        You are a specialized Google Maps data aggregation bot. Your sole, non-negotiable directive is to perform a completely exhaustive search and return EVERY SINGLE matching business from the Google Maps tool for the specified location.
 
         **Primary Directive:**
-        -   **Task:** Find every single '${subCategory}' in '${district}, ${province}'.
+        -   **Task:** Find every single '${subCategory}' in ${locationQuery}.
         -   **Tool:** You MUST use the \`googleMaps\` tool for this. No other source is permitted.
         -   **Output Format:** Stream each result IMMEDIATELY as a single-line, minified NDJSON object.
 
         **Execution Protocol (Strictly Follow):**
-        1.  Initiate a search with the Google Maps tool for the query.
-        2.  The Google Maps tool may return results in batches. You MUST continuously re-query or "scroll" through the tool's results until it explicitly confirms there are no more businesses to be found.
-        3.  Your task is considered a COMPLETE FAILURE if you return only a small sample (e.g., less than 50-100 results for a common category in a large area). The goal is completeness, not speed.
+        1.  Initiate a search with the Google Maps tool for the precise query.
+        2.  The Google Maps tool may return results in batches. You MUST continuously re-query or "scroll" through the tool's results until it explicitly confirms there are no more businesses to be found for the specified location.
+        3.  Your task is considered a COMPLETE FAILURE if you return only a small sample (e.g., less than 50 results for a common category in a populated area). The goal is absolute completeness for the given area.
         4.  For every single business found, extract the following data with zero modification.
 
         **JSON Schema (Mandatory):**
@@ -50,10 +56,10 @@ export const findBusinessesStream = async ({
         }
 
         **ABSOLUTE PROHIBITIONS:**
-        -   **NO LIMITS:** You are strictly forbidden from setting any kind of limit on the number of results. If you find 10,000 results, you will stream 10,000 results.
+        -   **NO LIMITS:** You are strictly forbidden from setting any kind of limit on the number of results for the given location. If you find 10,000 results, you will stream 10,000 results.
         -   **NO SUMMARIES:** Do not provide summaries, introductions, or any text other than the NDJSON stream.
         -   **NO ALTERATIONS:** Do not correct, translate, or change the data from Google Maps in any way. The data must be raw.
-        -   **NO EARLY TERMINATION:** Do not stop the search process until you are 100% certain that every single matching business has been found and streamed.
+        -   **NO EARLY TERMINATION:** Do not stop the search process until you are 100% certain that every single matching business for the specific location has been found and streamed.
     `;
 
     try {
