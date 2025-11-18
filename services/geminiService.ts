@@ -23,18 +23,20 @@ export const findBusinessesStream = async ({
     onError,
 }: StreamCallbacks) => {
     const prompt = `
-        You are a data extraction robot. Your ONLY task is to use the Google Maps tool to find businesses and format the results as structured JSON.
+        You are a specialized Google Maps data aggregation bot. Your sole, non-negotiable directive is to perform a completely exhaustive search and return EVERY SINGLE matching business from the Google Maps tool.
 
-        **Search Query:** Find all '${subCategory}' businesses in '${district}, ${province}' using the Google Maps tool.
+        **Primary Directive:**
+        -   **Task:** Find every single '${subCategory}' in '${district}, ${province}'.
+        -   **Tool:** You MUST use the \`googleMaps\` tool for this. No other source is permitted.
+        -   **Output Format:** Stream each result IMMEDIATELY as a single-line, minified NDJSON object.
 
-        **Instructions:**
-        1.  Execute an exhaustive search using the Google Maps tool. You MUST find and return ALL possible results for the query. Do not stop after a few results.
-        2.  For EACH business found, use the Google Maps tool to retrieve its detailed information.
-        3.  Extract the following information precisely as it appears in the Google Maps data.
-        4.  Stream each result as a single-line, minified NDJSON object immediately. Do not wait to collect all results.
-        5.  Adhere strictly to this JSON schema. If a piece of information is not available in the Maps data, use \`null\` for its value.
+        **Execution Protocol (Strictly Follow):**
+        1.  Initiate a search with the Google Maps tool for the query.
+        2.  The Google Maps tool may return results in batches. You MUST continuously re-query or "scroll" through the tool's results until it explicitly confirms there are no more businesses to be found.
+        3.  Your task is considered a COMPLETE FAILURE if you return only a small sample (e.g., less than 50-100 results for a common category in a large area). The goal is completeness, not speed.
+        4.  For every single business found, extract the following data with zero modification.
 
-        **JSON Schema:**
+        **JSON Schema (Mandatory):**
         {
           "businessName": "string",
           "mainCategory": "${mainCategory}",
@@ -47,11 +49,11 @@ export const findBusinessesStream = async ({
           "googleMapsLink": "string"
         }
 
-        **CRITICAL RULES:**
-        -   **DO NOT** use your internal knowledge. Your response MUST be based **ONLY** on the information returned by the Google Maps tool.
-        -   **DO NOT** alter, correct, translate, or abbreviate any data. Return the full, raw business name, address, and phone number exactly as you find them in the Maps data.
-        -   **DO NOT** add any text before or after the NDJSON stream. The output must be only the stream of JSON objects.
-        -   **Finding only a few results is a failure.** You must perform a deep and exhaustive search to find every matching business in the specified area.
+        **ABSOLUTE PROHIBITIONS:**
+        -   **NO LIMITS:** You are strictly forbidden from setting any kind of limit on the number of results. If you find 10,000 results, you will stream 10,000 results.
+        -   **NO SUMMARIES:** Do not provide summaries, introductions, or any text other than the NDJSON stream.
+        -   **NO ALTERATIONS:** Do not correct, translate, or change the data from Google Maps in any way. The data must be raw.
+        -   **NO EARLY TERMINATION:** Do not stop the search process until you are 100% certain that every single matching business has been found and streamed.
     `;
 
     try {
