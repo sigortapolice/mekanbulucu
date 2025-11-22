@@ -422,15 +422,15 @@ const App: React.FC = () => {
     </svg>
   );
 
-  const ClipboardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  const CopyIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2-2Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75c-.621 0-1.125-.504-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125-1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
     </svg>
   );
 
-  const RefreshIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  const ClearIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.664 0l3.181-3.183m-4.991-2.691V5.25a2.25 2.25 0 0 0-2.25-2.25h-4.5a2.25 2.25 0 0 0-2.25 2.25v4.5A2.25 2.25 0 0 0 6.75 12h4.5a2.25 2.25 0 0 0 2.25-2.25V9.348Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
     </svg>
   );
 
@@ -490,13 +490,13 @@ const App: React.FC = () => {
               <Button onClick={handleSearch} disabled={isSearchDisabled || loading} Icon={SearchIcon} className="w-full">
                 {loading ? 'Aranıyor...' : 'Bul'}
               </Button>
-              <Button onClick={handleCopyToClipboard} disabled={isExportDisabled} variant="secondary" Icon={ClipboardIcon} className="w-full">
+              <Button onClick={handleCopyToClipboard} disabled={isExportDisabled} variant="secondary" Icon={CopyIcon} className="w-full">
                 Kopyala
               </Button>
               <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon} className="w-full">
                 XLSX İndir
               </Button>
-              <Button onClick={handleClear} disabled={isClearDisabled || loading} variant="secondary" Icon={RefreshIcon} className="w-full">
+              <Button onClick={handleClear} disabled={isClearDisabled || loading} variant="secondary" Icon={ClearIcon} className="w-full">
                 Temizle
               </Button>
             </div>
