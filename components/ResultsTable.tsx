@@ -20,49 +20,45 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
               Arama Sonuçları ({businesses.length} işletme bulundu)
           </h3>
       </div>
-      <div className="overflow-x-auto">
-        <div className="align-middle inline-block min-w-full">
-          <div className="shadow-sm overflow-hidden border-b border-gray-200 dark:border-zinc-700 sm:rounded-b-lg">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-              <thead className="bg-[#F9F9FA] dark:bg-zinc-800">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">İşletme Adı</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Telefon</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Adres</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Puan</th>
-                </tr>
-              </thead>
-              <tbody className="bg-[#F9F9FA] dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700">
-                {businesses.map((business, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{business.businessName}</div>
-                      <a href={business.googleMapsLink} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Google Haritalar'da Görüntüle</a>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-gray-100">{business.mainCategory}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{business.subCategory}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{business.phone || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-gray-100">{business.neighborhood}, {business.district}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">{business.address}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {business.googleRating ? (
-                          <div className="flex items-center">
-                              <StarIcon className="w-4 h-4 text-yellow-400 mr-1" />
-                              {business.googleRating.toFixed(1)}
-                          </div>
-                      ) : 'N/A'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div className="shadow-sm overflow-hidden border-b border-gray-200 dark:border-zinc-700 sm:rounded-b-lg">
+        <table className="w-full table-fixed divide-y divide-gray-200 dark:divide-zinc-700">
+          <thead className="bg-[#F9F9FA] dark:bg-zinc-800">
+            <tr>
+              <th scope="col" className="w-[25%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">İşletme Adı</th>
+              <th scope="col" className="w-[20%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori</th>
+              <th scope="col" className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Telefon</th>
+              <th scope="col" className="w-[30%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Adres</th>
+              <th scope="col" className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Puan</th>
+            </tr>
+          </thead>
+          <tbody className="bg-[#F9F9FA] dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700">
+            {businesses.map((business, index) => (
+              <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800">
+                <td className="px-6 py-4 align-top">
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{business.businessName}</div>
+                  <a href={business.googleMapsLink} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Google Haritalar'da Görüntüle</a>
+                </td>
+                <td className="px-6 py-4 align-top">
+                  <div className="text-sm text-gray-900 dark:text-gray-100">{business.mainCategory}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{business.subCategory}</div>
+                </td>
+                <td className="px-6 py-4 align-top text-sm text-gray-500 dark:text-gray-400">{business.phone || 'N/A'}</td>
+                <td className="px-6 py-4 align-top">
+                  <div className="text-sm text-gray-900 dark:text-gray-100 break-words">{business.neighborhood}, {business.district}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 break-words">{business.address}</div>
+                </td>
+                <td className="px-6 py-4 align-top text-sm text-gray-500 dark:text-gray-400">
+                  {business.googleRating ? (
+                      <div className="flex items-center">
+                          <StarIcon className="w-4 h-4 text-yellow-400 mr-1 flex-shrink-0" />
+                          {business.googleRating.toFixed(1)}
+                      </div>
+                  ) : 'N/A'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

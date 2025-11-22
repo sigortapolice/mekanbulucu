@@ -112,6 +112,32 @@ const App: React.FC = () => {
       localStorage.removeItem('businessSearchHistory');
   };
 
+  const playCompletionSound = () => {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) {
+      console.warn("Web Audio API is not supported by this browser.");
+      return;
+    }
+    const audioContext = new AudioContext();
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5 note, a pleasant beep
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Set volume to avoid being too loud
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.15); // Beep for 150ms
+
+    oscillator.onended = () => {
+      audioContext.close().catch(e => console.error("Error closing AudioContext", e));
+    };
+  };
+
   const handleSearch = async () => {
     if (!province || !district) {
       setError("Arama yapmak için en azından İl ve İlçe seçmelisiniz.");
@@ -215,6 +241,7 @@ const App: React.FC = () => {
     
     setLoading(false);
     setSearchProgress(null);
+    playCompletionSound();
   };
 
   const handleExport = () => {
@@ -380,7 +407,7 @@ const App: React.FC = () => {
                 {loading ? 'Aranıyor...' : 'Bul'}
               </Button>
               <Button onClick={handleCopyToClipboard} disabled={isExportDisabled} variant="secondary" Icon={ClipboardIcon} className="w-full">
-                Panoya Kopyala
+                Kopyala
               </Button>
               <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon} className="w-full">
                 XLSX İndir
