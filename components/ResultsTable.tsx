@@ -39,6 +39,11 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{business.businessName}</div>
                       <a href={business.googleMapsLink} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-900">Google Haritalar'da Görüntüle</a>
+                      {business.googlePlaceId && (
+                        <div className="text-xs text-gray-500 mt-1 select-all">
+                          Place ID: <code className="bg-gray-100 px-1 py-0.5 rounded text-gray-800">{business.googlePlaceId}</code>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{business.mainCategory}</div>

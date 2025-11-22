@@ -52,7 +52,8 @@ export const findBusinessesStream = async ({
           "neighborhood": "string",
           "address": "string",
           "googleRating": "number | null",
-          "googleMapsLink": "string"
+          "googleMapsLink": "string",
+          "googlePlaceId": "string"
         }
 
         **ABSOLUTE PROHIBITIONS:**
