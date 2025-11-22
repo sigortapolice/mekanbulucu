@@ -131,53 +131,84 @@ const App: React.FC = () => {
     const provinceLabel = PROVINCES.find(p => p.value === province)?.label || '';
     const districtLabel = DISTRICTS[province]?.find(d => d.value === district)?.label || '';
     
+    // Determine neighborhoods to search
     const allNeighborhoodsForDistrict = NEIGHBORHOODS[province]?.[district];
     let neighborhoodsToSearch: Option[];
-
     if (neighborhood && allNeighborhoodsForDistrict) {
-        // A specific neighborhood is selected
         const selectedNeighborhoodObject = allNeighborhoodsForDistrict.find(n => n.value === neighborhood);
         neighborhoodsToSearch = selectedNeighborhoodObject ? [selectedNeighborhoodObject] : [];
     } else if (allNeighborhoodsForDistrict) {
-        // "All" is selected, use all neighborhoods
         neighborhoodsToSearch = allNeighborhoodsForDistrict;
     } else {
-        // Fallback for districts without a defined neighborhood list
         neighborhoodsToSearch = [{ value: district, label: '' }];
     }
 
-    const totalSearches = neighborhoodsToSearch.length;
+    // Determine category search tasks
+    const mainCategoryLabel = MAIN_CATEGORIES.find(c => c.value === mainCategory)?.label || '';
+    const allSubCategoriesForMain = mainCategory ? SUB_CATEGORIES[mainCategory] || [] : [];
+    const subCategoryLabel = allSubCategoriesForMain.find(s => s.value === subCategory)?.label || '';
+
+    let categorySearchTasks: { main: string; sub: string }[] = [];
+
+    if (mainCategory && !subCategory) {
+        // Specific Main Category, "All" Sub-Categories: Create a search task for each sub-category.
+        categorySearchTasks = allSubCategoriesForMain.map(sc => ({
+            main: mainCategoryLabel,
+            sub: sc.label
+        }));
+    } else {
+        // All other cases (All/All or Specific/Specific): Create a single search task.
+        categorySearchTasks = [{
+            main: mainCategoryLabel,
+            sub: subCategoryLabel
+        }];
+    }
+    
+    const totalSearches = neighborhoodsToSearch.length * categorySearchTasks.length;
+    if (totalSearches === 0 && neighborhoodsToSearch.length > 0) {
+        setLoading(false);
+        setError("Seçilen ana kategori için alt kategori bulunamadı.");
+        return;
+    }
+
     const uniqueResults = new Map<string, Business>();
+    let searchesCompleted = 0;
 
-    for (let i = 0; i < totalSearches; i++) {
-        const currentNeighborhood = neighborhoodsToSearch[i];
-        const progressNeighborhoodLabel = currentNeighborhood.label || districtLabel;
+    for (const currentNeighborhood of neighborhoodsToSearch) {
+        for (const categoryTask of categorySearchTasks) {
+            searchesCompleted++;
+            const progressNeighborhoodLabel = currentNeighborhood.label || districtLabel;
 
-        setSearchProgress({ current: i + 1, total: totalSearches, neighborhood: progressNeighborhoodLabel });
+            const progressText = categoryTask.sub 
+                ? `${progressNeighborhoodLabel}: ${categoryTask.sub}` 
+                : progressNeighborhoodLabel;
+            
+            setSearchProgress({ current: searchesCompleted, total: totalSearches, neighborhood: progressText });
 
-        try {
-            await findBusinessesStream({
-                apiKey,
-                province: provinceLabel,
-                district: districtLabel,
-                neighborhood: currentNeighborhood.label,
-                mainCategory: MAIN_CATEGORIES.find(c => c.value === mainCategory)?.label || '',
-                subCategory: SUB_CATEGORIES[mainCategory]?.find(s => s.value === subCategory)?.label || '',
-                onData: (business) => {
-                    const key = business.googleMapsLink || `${business.businessName}|${business.address}`;
-                    if (!uniqueResults.has(key)) {
-                        uniqueResults.set(key, business);
-                        setResults(Array.from(uniqueResults.values()));
+            try {
+                await findBusinessesStream({
+                    apiKey,
+                    province: provinceLabel,
+                    district: districtLabel,
+                    neighborhood: currentNeighborhood.label,
+                    mainCategory: categoryTask.main,
+                    subCategory: categoryTask.sub,
+                    onData: (business) => {
+                        const key = business.googleMapsLink || `${business.businessName}|${business.address}`;
+                        if (!uniqueResults.has(key)) {
+                            uniqueResults.set(key, business);
+                            setResults(Array.from(uniqueResults.values()));
+                        }
+                    },
+                    onComplete: () => {},
+                    onError: (e: Error) => {
+                        console.error(`Error searching ${progressText}:`, e);
                     }
-                },
-                onComplete: () => {},
-                onError: (e: Error) => {
-                    console.error(`Error searching ${currentNeighborhood.label}:`, e);
-                }
-            });
-        } catch (e: any) {
-             console.error(`Fatal error during search for ${currentNeighborhood.label}:`, e);
-             setError(`Arama sırasında bir hata oluştu (${currentNeighborhood.label}): ${e.message}`);
+                });
+            } catch (e: any) {
+                 console.error(`Fatal error during search for ${progressText}:`, e);
+                 setError(`Arama sırasında bir hata oluştu (${progressText}): ${e.message}`);
+            }
         }
     }
     
@@ -329,7 +360,7 @@ const App: React.FC = () => {
                 <SelectDropdown id="neighborhood" label="Mahalle" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} options={neighborhoodOptions} placeholder="Mahalle Seçin (Tümü)" disabled={!district || !apiKey || loading} />
               </div>
               <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={[{ value: '', label: 'Tümü' }, ...MAIN_CATEGORIES]} placeholder="Ana Kategori Seçin" disabled={!apiKey || loading} />
-              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={[{ value: '', label: 'Tümü' }, ...subCategoryOptions]} placeholder="Alt Kategori Seçin" disabled={!apiKey || loading} />
+              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={[{ value: '', label: 'Tümü' }, ...subCategoryOptions]} placeholder="Alt Kategori Seçin" disabled={!mainCategory || !apiKey || loading} />
             </div>
             {error && (
                 <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md text-center">
