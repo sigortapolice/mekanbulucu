@@ -146,7 +146,7 @@ const App: React.FC = () => {
       alert("Dışa aktarılacak veri bulunmamaktadır.");
       return;
     }
-    
+
     const headers = [
       'businessName',
       'mainCategory',
@@ -175,6 +175,21 @@ const App: React.FC = () => {
     ];
 
     const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
+
+    // FIX: Explicitly set the number format for the 'googleRating' column (H)
+    // to prevent Excel from auto-formatting it as a date (e.g., 4.3 becoming 03-Apr).
+    for (let i = 0; i < results.length; i++) {
+      // Data rows in the sheet start from row 2 (1-based index), after the header row.
+      const cellAddress = `H${i + 2}`;
+      const cell = worksheet[cellAddress];
+
+      // Check if the cell exists and contains a numeric value before applying formatting.
+      if (cell && typeof cell.v === 'number') {
+        cell.t = 'n'; // Explicitly set the type to 'number'.
+        cell.z = '0.0'; // Apply a number format string for one decimal place.
+      }
+    }
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "İşletmeler", true);
     
