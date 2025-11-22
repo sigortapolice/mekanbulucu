@@ -30,11 +30,11 @@ export const findBusinessesStream = async ({
 
     let taskDescription = '';
     if (subCategory) {
-        taskDescription = `Find every single '${subCategory}'`;
+        taskDescription = `Your primary task is an exhaustive search to find every single '${subCategory}' business. Your success is measured by finding all of them within the location boundary.`;
     } else if (mainCategory) {
-        taskDescription = `Find every single business under the '${mainCategory}' main category`;
+        taskDescription = `Your primary task is an exhaustive search for all businesses under the '${mainCategory}' category. Your success is measured by finding all of them within the location boundary.`;
     } else {
-        taskDescription = `Find ALL businesses. To ensure comprehensive results, you must search for a wide variety of common business types. For example, search for 'restoran', 'mağaza', 'market', 'otel', 'kafe', 'eczane', 'okul', 'banka', 'tamirhane', and any other business type you can identify in the area. Your goal is to be completely exhaustive.`;
+        taskDescription = `This is a comprehensive search. Your primary task is to find ALL businesses. To ensure comprehensive results, you must search for a wide variety of common business types like 'restoran', 'mağaza', 'market', 'otel', 'kafe', 'eczane', 'okul', 'banka', 'tamirhane', and more. Be completely exhaustive.`;
     }
 
     const mainCategorySchemaValue = mainCategory ? `"${mainCategory}"` : `"string (deduce from business type if possible, otherwise 'Diğer')"`;
@@ -49,7 +49,7 @@ export const findBusinessesStream = async ({
     const prompt = `
         You are a hyper-precise Google Maps data extraction bot. Your mission is to find and return every single business matching the criteria within a strictly defined geographical area. Adherence to the location boundary is your absolute top priority.
 
-        **Task:** ${taskDescription} in the location: ${locationQuery}.
+        **Task:** ${taskDescription} The location for this task is: ${locationQuery}.
 
         **CRITICAL VALIDATION PROTOCOL (MANDATORY):**
         For every single business the \`googleMaps\` tool finds, you MUST perform the following validation before streaming its data:
