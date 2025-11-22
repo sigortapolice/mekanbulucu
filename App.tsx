@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Business, Option, SearchHistoryItem } from './types';
 import { PROVINCES, DISTRICTS, MAIN_CATEGORIES, SUB_CATEGORIES, NEIGHBORHOODS } from './constants';
@@ -78,8 +77,8 @@ const App: React.FC = () => {
     const provinceLabel = PROVINCES.find(p => p.value === province)?.label || '';
     const districtLabel = DISTRICTS[province]?.find(d => d.value === district)?.label || '';
     const neighborhoodLabel = NEIGHBORHOODS[province]?.[district]?.find(n => n.value === neighborhood)?.label || 'Tümü';
-    const mainCategoryLabel = MAIN_CATEGORIES.find(c => c.value === mainCategory)?.label || '';
-    const subCategoryLabel = SUB_CATEGORIES[mainCategory]?.find(s => s.value === subCategory)?.label || '';
+    const mainCategoryLabel = MAIN_CATEGORIES.find(c => c.value === mainCategory)?.label || 'Tümü';
+    const subCategoryLabel = SUB_CATEGORIES[mainCategory]?.find(s => s.value === subCategory)?.label || 'Tümü';
 
     const newSearchItem: SearchHistoryItem = {
       id: new Date().toISOString(),
@@ -162,8 +161,8 @@ const App: React.FC = () => {
                 province: provinceLabel,
                 district: districtLabel,
                 neighborhood: currentNeighborhood.label,
-                mainCategory,
-                subCategory,
+                mainCategory: MAIN_CATEGORIES.find(c => c.value === mainCategory)?.label || '',
+                subCategory: SUB_CATEGORIES[mainCategory]?.find(s => s.value === subCategory)?.label || '',
                 onData: (business) => {
                     const key = business.googleMapsLink || `${business.businessName}|${business.address}`;
                     if (!uniqueResults.has(key)) {
@@ -330,7 +329,7 @@ const App: React.FC = () => {
                 <SelectDropdown id="neighborhood" label="Mahalle" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} options={neighborhoodOptions} placeholder="Mahalle Seçin (Tümü)" disabled={!district || !apiKey || loading} />
               </div>
               <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={[{ value: '', label: 'Tümü' }, ...MAIN_CATEGORIES]} placeholder="Ana Kategori Seçin" disabled={!apiKey || loading} />
-              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={[{ value: '', label: 'Tümü' }, ...subCategoryOptions]} placeholder="Alt Kategori Seçin" disabled={!mainCategory || !apiKey || loading} />
+              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={[{ value: '', label: 'Tümü' }, ...subCategoryOptions]} placeholder="Alt Kategori Seçin" disabled={!apiKey || loading} />
             </div>
             {error && (
                 <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md text-center">

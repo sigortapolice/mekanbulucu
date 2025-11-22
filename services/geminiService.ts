@@ -28,11 +28,23 @@ export const findBusinessesStream = async ({
         ? `'${neighborhood}, ${district}, ${province}'` 
         : `'${district}, ${province}'`;
 
+    let taskDescription = '';
+    if (subCategory) {
+        taskDescription = `Find every single '${subCategory}'`;
+    } else if (mainCategory) {
+        taskDescription = `Find every single business under the '${mainCategory}' main category`;
+    } else {
+        taskDescription = `Find every single business`;
+    }
+
+    const mainCategorySchemaValue = mainCategory ? `"${mainCategory}"` : `"string (deduce from business type if possible, otherwise 'Diğer')"`;
+    const subCategorySchemaValue = subCategory ? `"${subCategory}"` : `"string (deduce from business type if possible, otherwise 'Diğer')"`;
+
     const prompt = `
         You are a specialized Google Maps data aggregation bot. Your sole, non-negotiable directive is to perform a completely exhaustive search and return EVERY SINGLE matching business from the Google Maps tool for the specified location.
 
         **Primary Directive:**
-        -   **Task:** Find every single '${subCategory}' in ${locationQuery}.
+        -   **Task:** ${taskDescription} in ${locationQuery}.
         -   **Tool:** You MUST use the \`googleMaps\` tool for this. No other source is permitted.
         -   **Output Format:** Stream each result IMMEDIATELY as a single-line, minified NDJSON object.
 
@@ -45,8 +57,8 @@ export const findBusinessesStream = async ({
         **JSON Schema (Mandatory):**
         {
           "businessName": "string",
-          "mainCategory": "${mainCategory}",
-          "subCategory": "${subCategory}",
+          "mainCategory": ${mainCategorySchemaValue},
+          "subCategory": ${subCategorySchemaValue},
           "phone": "string | null",
           "district": "${district}",
           "neighborhood": "string",
