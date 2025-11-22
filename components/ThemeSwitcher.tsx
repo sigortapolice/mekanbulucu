@@ -40,49 +40,53 @@ const THEME_CONFIG: Record<Theme, { next: Theme; Icon: React.ElementType; label:
 
 
 const ThemeSwitcher: React.FC<{ className?: string }> = ({ className }) => {
-    const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'system');
+    const [theme, setTheme] = useState<Theme>(() => {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'light' || storedTheme === 'dark') {
+            return storedTheme;
+        }
+        return 'system';
+    });
 
+    // Effect to apply theme class and update localStorage when `theme` state changes.
     useEffect(() => {
         const root = window.document.documentElement;
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        const applyTheme = (newTheme: Theme) => {
-            if (newTheme === 'system') {
-                localStorage.removeItem('theme');
-                if (systemPrefersDark.matches) {
-                    root.classList.add('dark');
-                } else {
-                    root.classList.remove('dark');
-                }
-            } else {
-                localStorage.setItem('theme', newTheme);
-                if (newTheme === 'dark') {
-                    root.classList.add('dark');
-                } else {
-                    root.classList.remove('dark');
-                }
-            }
-        };
-        
-        applyTheme(theme);
+        if (theme === 'dark' || (theme === 'system' && systemPrefersDark)) {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
 
-        const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-            if (localStorage.getItem('theme') === null) {
-                if (e.matches) {
-                    root.classList.add('dark');
-                } else {
-                    root.classList.remove('dark');
-                }
-            }
-        };
-
-        systemPrefersDark.addEventListener('change', handleSystemThemeChange);
-        return () => systemPrefersDark.removeEventListener('change', handleSystemThemeChange);
-
+        if (theme === 'system') {
+            localStorage.removeItem('theme');
+        } else {
+            localStorage.setItem('theme', theme);
+        }
     }, [theme]);
+
+    // Effect to listen for OS-level theme changes, runs only once on mount.
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        const handleChange = (e: MediaQueryListEvent) => {
+            // Only update if the current theme is 'system' (i.e., no theme in localStorage)
+            if (!localStorage.getItem('theme')) {
+                if (e.matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    }, []);
     
     const handleThemeChange = () => {
-        setTheme(THEME_CONFIG[theme].next);
+        setTheme(currentTheme => THEME_CONFIG[currentTheme].next);
     };
 
     const { Icon, label } = THEME_CONFIG[theme];
