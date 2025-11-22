@@ -328,7 +328,7 @@ const App: React.FC = () => {
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Query Screen */}
         <div className="lg:col-span-1 space-y-8 lg:sticky lg:top-8 self-start">
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow">
+          <div className="bg-[#F9F9FA] dark:bg-zinc-900 p-6 rounded-lg shadow">
             <div className="mb-6 pb-6 border-b border-gray-200 dark:border-zinc-700">
                 <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Google AI Studio API Anahtarı
@@ -394,7 +394,7 @@ const App: React.FC = () => {
         
         {/* Right Column: Results Screen */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow h-full">
+          <div className="bg-[#F9F9FA] dark:bg-zinc-900 rounded-lg shadow h-full">
             {loading && <LoadingSpinner progressText={searchProgress ? `Aranıyor: ${searchProgress.neighborhood} (${searchProgress.current}/${searchProgress.total})` : undefined} />}
             
             {(searchHasRun || results.length > 0) && !loading && <ResultsTable businesses={results} />}

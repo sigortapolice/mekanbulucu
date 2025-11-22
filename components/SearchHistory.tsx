@@ -25,7 +25,7 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({ history, onSelect, onClea
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow">
+    <div className="bg-[#F9F9FA] dark:bg-zinc-900 p-6 rounded-lg shadow">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Geçmiş Aramalar</h3>
         <button

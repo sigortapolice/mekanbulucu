@@ -15,7 +15,7 @@ const StarIcon: React.FC<{ className?: string }> = ({ className }) => (
 const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
   return (
     <div>
-      <div className="p-4 border-b border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800/20 sm:rounded-t-lg">
+      <div className="p-4 border-b border-gray-200 dark:border-zinc-700 bg-[#F9F9FA]/50 dark:bg-zinc-800/20 sm:rounded-t-lg">
           <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200">
               Arama Sonuçları ({businesses.length} işletme bulundu)
           </h3>
@@ -24,7 +24,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
         <div className="align-middle inline-block min-w-full">
           <div className="shadow-sm overflow-hidden border-b border-gray-200 dark:border-zinc-700 sm:rounded-b-lg">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-              <thead className="bg-gray-50 dark:bg-zinc-800">
+              <thead className="bg-[#F9F9FA] dark:bg-zinc-800">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">İşletme Adı</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori</th>
@@ -33,7 +33,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Puan</th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700">
+              <tbody className="bg-[#F9F9FA] dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700">
                 {businesses.map((business, index) => (
                   <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800">
                     <td className="px-6 py-4 whitespace-nowrap">

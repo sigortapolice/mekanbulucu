@@ -12,90 +12,45 @@ const MoonIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-const SystemIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25Z" />
-    </svg>
-);
-
-type Theme = 'light' | 'dark' | 'system';
-
-const THEME_CONFIG: Record<Theme, { next: Theme; Icon: React.ElementType; label: string }> = {
-    light: {
-        next: 'dark',
-        Icon: SunIcon,
-        label: 'Açık Mod'
-    },
-    dark: {
-        next: 'system',
-        Icon: MoonIcon,
-        label: 'Koyu Mod'
-    },
-    system: {
-        next: 'light',
-        Icon: SystemIcon,
-        label: 'Sistem'
-    }
-};
-
-
 const ThemeSwitcher: React.FC<{ className?: string }> = ({ className }) => {
-    const [theme, setTheme] = useState<Theme>(() => {
-        const storedTheme = localStorage.getItem('theme');
-        if (storedTheme === 'light' || storedTheme === 'dark') {
-            return storedTheme;
+    // Initialize state from the class on the <html> element, which is set by the inline script.
+    // This ensures consistency and avoids a flash of incorrect theme.
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return document.documentElement.classList.contains('dark');
         }
-        return 'system';
+        return false; // Default for SSR or other environments
     });
 
+    // Effect to apply changes to the DOM and localStorage when the state changes.
     useEffect(() => {
         const root = window.document.documentElement;
-
-        const applyTheme = () => {
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (theme === 'dark' || (theme === 'system' && systemPrefersDark)) {
-                root.classList.add('dark');
-            } else {
-                root.classList.remove('dark');
-            }
-        };
-
-        applyTheme();
-
-        if (theme === 'system') {
-            localStorage.removeItem('theme');
+        if (isDarkMode) {
+            root.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
         } else {
-            localStorage.setItem('theme', theme);
+            root.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
         }
-
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        
-        const handleSystemThemeChange = () => {
-             // This handler is only active when theme is 'system', so we can just re-apply.
-            applyTheme();
-        };
-
-        if (theme === 'system') {
-            mediaQuery.addEventListener('change', handleSystemThemeChange);
-        }
-
-        return () => {
-            mediaQuery.removeEventListener('change', handleSystemThemeChange);
-        };
-    }, [theme]);
+        // The 'system' value is no longer stored, simplifying logic.
+    }, [isDarkMode]);
     
+    // Toggle the theme state on button click.
     const handleThemeChange = () => {
-        setTheme(currentTheme => THEME_CONFIG[currentTheme].next);
+        setIsDarkMode(prevMode => !prevMode);
     };
 
-    const { Icon, label } = THEME_CONFIG[theme];
+    // Determine the current icon and label to display.
+    const Icon = isDarkMode ? MoonIcon : SunIcon;
+    const label = isDarkMode ? 'Koyu Mod' : 'Açık Mod';
+
     const baseClasses = "inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none transition-colors duration-200 text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600";
 
     return (
         <button
             onClick={handleThemeChange}
             className={`${baseClasses} ${className || ''}`}
-            aria-label={`Geçerli tema: ${label}. Değiştirmek için tıklayın.`}
+            aria-label={`Geçerli tema: ${label}. Diğer moda geçmek için tıklayın.`}
         >
             <Icon className="w-5 h-5 mr-2" />
             <span>{label}</span>

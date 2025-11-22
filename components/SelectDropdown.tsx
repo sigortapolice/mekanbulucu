@@ -22,7 +22,7 @@ const SelectDropdown: React.FC<SelectDropdownProps> = ({ id, label, value, onCha
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className="block w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-gray-900 dark:text-gray-200"
+        className="block w-full px-3 py-2 bg-[#F9F9FA] dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-gray-900 dark:text-gray-200"
       >
         {!hasExplicitEmptyOption && <option value="" disabled>{placeholder}</option>}
         {options.map(option => (
