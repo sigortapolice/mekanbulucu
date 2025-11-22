@@ -60,7 +60,7 @@ export const findBusinessesStream = async ({
           "mainCategory": ${mainCategorySchemaValue},
           "subCategory": ${subCategorySchemaValue},
           "phone": "string | null",
-          "district": "${district}",
+          "district": "string (IMPORTANT: Extract the correct district name from the business's full address. This might be different from the initial search district, which is okay. Accuracy is key.)",
           "neighborhood": "string",
           "address": "string",
           "googleRating": "number | null",
