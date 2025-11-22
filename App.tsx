@@ -120,7 +120,7 @@ const App: React.FC = () => {
                 mainCategory,
                 subCategory,
                 onData: (business) => {
-                    const key = business.googlePlaceId || `${business.businessName}|${business.address}`;
+                    const key = business.googleMapsLink || `${business.businessName}|${business.address}`;
                     if (!uniqueResults.has(key)) {
                         uniqueResults.set(key, business);
                         setResults(Array.from(uniqueResults.values()));
@@ -156,9 +156,7 @@ const App: React.FC = () => {
       'neighborhood',
       'address',
       'googleRating',
-      'googleMapsLink',
-      'googlePlaceId',
-      'coordinates'
+      'googleMapsLink'
     ];
     
     const dataForSheet = [
@@ -173,8 +171,6 @@ const App: React.FC = () => {
             business.address,
             business.googleRating,
             business.googleMapsLink,
-            business.googlePlaceId || '',
-            business.coordinates || ''
         ])
     ];
 
@@ -192,11 +188,52 @@ const App: React.FC = () => {
       { wch: 40 }, // address
       { wch: 12 }, // googleRating
       { wch: 40 }, // googleMapsLink
-      { wch: 30 }, // googlePlaceId
-      { wch: 25 }, // coordinates
     ];
 
     XLSX.writeFile(workbook, "isletme_bulucu_sonuclari.xlsx");
+  };
+
+  const handleCopyToClipboard = async () => {
+    if (results.length === 0) {
+      alert("Kopyalanacak veri bulunmamaktadır.");
+      return;
+    }
+
+    const headers = [
+      'businessName',
+      'mainCategory',
+      'subCategory',
+      'phone',
+      'district',
+      'neighborhood',
+      'address',
+      'googleRating',
+      'googleMapsLink'
+    ];
+    
+    const dataToCopy = results.map(business => [
+        business.businessName,
+        business.mainCategory,
+        business.subCategory,
+        business.phone || '',
+        business.district,
+        business.neighborhood,
+        business.address,
+        business.googleRating ?? '',
+        business.googleMapsLink,
+    ]);
+
+    const tsvContent = [headers, ...dataToCopy]
+      .map(row => row.join('\t'))
+      .join('\n');
+    
+    try {
+      await navigator.clipboard.writeText(tsvContent);
+      alert('Sonuçlar panoya kopyalandı! Excel\'e yapıştırabilirsiniz.');
+    } catch (err) {
+      console.error('Panoya kopyalama başarısız oldu:', err);
+      alert('Panoya kopyalama başarısız oldu. Lütfen konsolu kontrol edin.');
+    }
   };
   
   const isSearchDisabled = !province || !district || !mainCategory || !subCategory || !apiKey;
@@ -213,6 +250,13 @@ const App: React.FC = () => {
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
     </svg>
   );
+
+  const ClipboardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" />
+    </svg>
+  );
+
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
@@ -267,6 +311,9 @@ const App: React.FC = () => {
             <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button onClick={handleSearch} disabled={isSearchDisabled || loading} Icon={SearchIcon}>
                 {loading ? 'Aranıyor...' : 'Bul'}
+              </Button>
+              <Button onClick={handleCopyToClipboard} disabled={isExportDisabled} variant="secondary" Icon={ClipboardIcon}>
+                Panoya Kopyala
               </Button>
               <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon}>
                 XLSX İndir
