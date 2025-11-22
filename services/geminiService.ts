@@ -24,8 +24,8 @@ export const findBusinessesStream = async ({
     onComplete,
     onError,
 }: StreamCallbacks) => {
-    const locationQuery = neighborhood 
-        ? `'${neighborhood}, ${district}, ${province}'` 
+    const locationQuery = neighborhood
+        ? `'${neighborhood}, ${district}, ${province}'`
         : `'${district}, ${province}'`;
 
     let taskDescription = '';
@@ -39,41 +39,50 @@ export const findBusinessesStream = async ({
 
     const mainCategorySchemaValue = mainCategory ? `"${mainCategory}"` : `"string (deduce from business type if possible, otherwise 'Diğer')"`;
     const subCategorySchemaValue = subCategory ? `"${subCategory}"` : `"string (deduce from business type if possible, otherwise 'Diğer')"`;
+    
+    const neighborhoodValidationRule = neighborhood 
+        ? `3.  Compare the neighborhood in the address with the target neighborhood: '${neighborhood}'.` 
+        : '';
+    const neighborhoodSchemaRule = neighborhood ? `'${neighborhood}'` : 'any';
+
 
     const prompt = `
-        You are a specialized Google Maps data aggregation bot. Your sole, non-negotiable directive is to perform a completely exhaustive search and return EVERY SINGLE matching business from the Google Maps tool for the specified location.
+        You are a hyper-precise Google Maps data extraction bot. Your mission is to find and return every single business matching the criteria within a strictly defined geographical area. Adherence to the location boundary is your absolute top priority.
 
-        **Primary Directive:**
-        -   **Task:** ${taskDescription} in ${locationQuery}.
-        -   **Tool:** You MUST use the \`googleMaps\` tool for this. No other source is permitted.
-        -   **Output Format:** Stream each result IMMEDIATELY as a single-line, minified NDJSON object.
+        **Task:** ${taskDescription} in the location: ${locationQuery}.
 
-        **Execution Protocol (Strictly Follow):**
-        1.  Initiate a search with the Google Maps tool for the precise query.
-        2.  The Google Maps tool may return results in batches. You MUST continuously re-query or "scroll" through the tool's results until it explicitly confirms there are no more businesses to be found for the specified location.
-        3.  Your task is considered a COMPLETE FAILURE if you return only a small sample (e.g., less than 50 results for a common category in a populated area). The goal is absolute completeness for the given area.
-        4.  For every single business found, extract the following data with zero modification.
+        **CRITICAL VALIDATION PROTOCOL (MANDATORY):**
+        For every single business the \`googleMaps\` tool finds, you MUST perform the following validation before streaming its data:
+        1.  Examine the full address of the business.
+        2.  Compare the district in the address with the target district: '${district}'.
+        ${neighborhoodValidationRule}
+        4.  **NON-NEGOTIABLE RULE:** If the business's address does NOT contain the EXACT district (and neighborhood, if specified) from the search query, you MUST DISCARD that result. DO NOT stream it. Minor variations like 'Mahallesi' or case differences are acceptable, but the core names must match.
+        5.  For example, if the search is for 'Davutdede, Yıldırım', a business located in 'Elmasbahçeler, Osmangazi' is an INVALID result and must be ignored.
 
-        **JSON Schema (Mandatory):**
+        **Execution and Output:**
+        -   **Tool:** Use the \`googleMaps\` tool exclusively.
+        -   **Exhaustiveness:** Within the strict location boundary defined above, find ALL matching businesses. Do not stop until the tool has no more results for that specific area. Your task is a failure if you miss businesses within the target zone.
+        -   **Output Format:** Stream each VALIDATED result IMMEDIATELY as a single-line, minified NDJSON object.
+
+        **JSON Schema (Mandatory for Validated Results):**
         {
           "businessName": "string",
           "mainCategory": ${mainCategorySchemaValue},
           "subCategory": ${subCategorySchemaValue},
           "phone": "string | null",
-          "district": "string (IMPORTANT: Extract the correct district name from the business's full address. This might be different from the initial search district, which is okay. Accuracy is key.)",
-          "neighborhood": "string",
+          "district": "string (Must exactly match '${district}')",
+          "neighborhood": "string (Must exactly match ${neighborhoodSchemaRule} if specified)",
           "address": "string",
           "googleRating": "number | null",
           "googleMapsLink": "string",
-          "placeId": "string (This is the unique Google Place ID for the business. It is critical.)",
-          "reviewCount": "number | null (This is the total number of reviews for the business.)"
+          "placeId": "string (Unique Google Place ID)",
+          "reviewCount": "number | null (Total number of reviews)"
         }
 
         **ABSOLUTE PROHIBITIONS:**
-        -   **NO LIMITS:** You are strictly forbidden from setting any kind of limit on the number of results for the given location. If you find 10,000 results, you will stream 10,000 results.
-        -   **NO SUMMARIES:** Do not provide summaries, introductions, or any text other than the NDJSON stream.
-        -   **NO ALTERATIONS:** Do not correct, translate, or change the data from Google Maps in any way. The data must be raw.
-        -   **NO EARLY TERMINATION:** Do not stop the search process until you are 100% certain that every single matching business for the specific location has been found and streamed.
+        -   **NO LOCATION EXPANSION:** You are strictly forbidden from expanding the search area. Only results from ${locationQuery} are permitted.
+        -   **NO SUMMARIES:** Do not provide any text other than the NDJSON stream.
+        -   **NO DATA ALTERATION:** Stream the raw data for validated businesses only.
     `;
 
     try {

@@ -327,18 +327,31 @@ const App: React.FC = () => {
 
     const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
 
+    // Apply specific cell formatting to prevent Excel auto-formatting issues
     for (let i = 0; i < results.length; i++) {
-      const ratingCellAddress = `I${i + 2}`;
-      const ratingCell = worksheet[ratingCellAddress];
-      if (ratingCell && typeof ratingCell.v === 'number') {
-        ratingCell.t = 'n';
-        ratingCell.z = '0.0';
-      }
-      const reviewCellAddress = `J${i + 2}`;
-      const reviewCell = worksheet[reviewCellAddress];
-      if (reviewCell && typeof reviewCell.v === 'number') {
-        reviewCell.t = 'n';
-      }
+        const rowIndex = i + 2; // +2 because Excel is 1-based and we have a header row
+
+        // Format Place ID as Text (Column B)
+        const placeIdCellAddress = `B${rowIndex}`;
+        const placeIdCell = worksheet[placeIdCellAddress];
+        if (placeIdCell) {
+            placeIdCell.t = 's'; // 's' for string (text)
+        }
+
+        // Format Google Rating as a Number with one decimal place (Column I)
+        const ratingCellAddress = `I${rowIndex}`;
+        const ratingCell = worksheet[ratingCellAddress];
+        if (ratingCell && typeof ratingCell.v === 'number') {
+            ratingCell.t = 'n'; // 'n' for number
+            ratingCell.z = '0.0'; // format for one decimal place
+        }
+        
+        // Format Review Count as a Number (Column J)
+        const reviewCellAddress = `J${rowIndex}`;
+        const reviewCell = worksheet[reviewCellAddress];
+        if (reviewCell && typeof reviewCell.v === 'number') {
+            reviewCell.t = 'n';
+        }
     }
 
     const workbook = XLSX.utils.book_new();
