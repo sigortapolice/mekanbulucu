@@ -263,10 +263,11 @@ const App: React.FC = () => {
                     mainCategory: categoryTask.main,
                     subCategory: categoryTask.sub,
                     onData: (business) => {
-                        const key = business.googleMapsLink || `${business.businessName}|${business.address}`;
+                        const key = business.placeId;
                         if (!uniqueResults.has(key)) {
                             uniqueResults.set(key, business);
-                            setResults(Array.from(uniqueResults.values()));
+                            const sortedResults = Array.from(uniqueResults.values()).sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
+                            setResults(sortedResults);
                         }
                     },
                     onComplete: () => {},
@@ -295,6 +296,7 @@ const App: React.FC = () => {
 
     const headers = [
       'businessName',
+      'placeId',
       'mainCategory',
       'subCategory',
       'phone',
@@ -302,6 +304,7 @@ const App: React.FC = () => {
       'neighborhood',
       'address',
       'googleRating',
+      'reviewCount',
       'googleMapsLink'
     ];
     
@@ -309,6 +312,7 @@ const App: React.FC = () => {
         headers,
         ...results.map(business => [
             business.businessName,
+            business.placeId,
             business.mainCategory,
             business.subCategory,
             business.phone || '',
@@ -316,6 +320,7 @@ const App: React.FC = () => {
             business.neighborhood,
             business.address,
             business.googleRating,
+            business.reviewCount,
             business.googleMapsLink,
         ])
     ];
@@ -323,11 +328,16 @@ const App: React.FC = () => {
     const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
 
     for (let i = 0; i < results.length; i++) {
-      const cellAddress = `H${i + 2}`;
-      const cell = worksheet[cellAddress];
-      if (cell && typeof cell.v === 'number') {
-        cell.t = 'n';
-        cell.z = '0.0';
+      const ratingCellAddress = `I${i + 2}`;
+      const ratingCell = worksheet[ratingCellAddress];
+      if (ratingCell && typeof ratingCell.v === 'number') {
+        ratingCell.t = 'n';
+        ratingCell.z = '0.0';
+      }
+      const reviewCellAddress = `J${i + 2}`;
+      const reviewCell = worksheet[reviewCellAddress];
+      if (reviewCell && typeof reviewCell.v === 'number') {
+        reviewCell.t = 'n';
       }
     }
 
@@ -335,8 +345,8 @@ const App: React.FC = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "İşletmeler", true);
     
     worksheet['!cols'] = [
-      { wch: 30 }, { wch: 20 }, { wch: 20 }, { wch: 15 },
-      { wch: 15 }, { wch: 20 }, { wch: 40 }, { wch: 12 }, { wch: 40 }
+      { wch: 30 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 15 },
+      { wch: 15 }, { wch: 20 }, { wch: 40 }, { wch: 12 }, { wch: 12 }, { wch: 40 }
     ];
 
     XLSX.writeFile(workbook, "isletme_bulucu_sonuclari.xlsx");
@@ -349,14 +359,14 @@ const App: React.FC = () => {
     }
 
     const headers = [
-      'businessName', 'mainCategory', 'subCategory', 'phone', 'district',
-      'neighborhood', 'address', 'googleRating', 'googleMapsLink'
+      'businessName', 'placeId', 'mainCategory', 'subCategory', 'phone', 'district',
+      'neighborhood', 'address', 'googleRating', 'reviewCount', 'googleMapsLink'
     ];
     
     const dataToCopy = results.map(business => [
-        business.businessName, business.mainCategory, business.subCategory,
+        business.businessName, business.placeId, business.mainCategory, business.subCategory,
         business.phone || '', business.district, business.neighborhood,
-        business.address, business.googleRating ?? '', business.googleMapsLink,
+        business.address, business.googleRating ?? '', business.reviewCount ?? '', business.googleMapsLink,
     ]);
 
     const tsvContent = [headers, ...dataToCopy]

@@ -64,7 +64,9 @@ export const findBusinessesStream = async ({
           "neighborhood": "string",
           "address": "string",
           "googleRating": "number | null",
-          "googleMapsLink": "string"
+          "googleMapsLink": "string",
+          "placeId": "string (This is the unique Google Place ID for the business. It is critical.)",
+          "reviewCount": "number | null (This is the total number of reviews for the business.)"
         }
 
         **ABSOLUTE PROHIBITIONS:**
