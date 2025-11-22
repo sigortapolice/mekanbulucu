@@ -146,9 +146,56 @@ const App: React.FC = () => {
       alert("Dışa aktarılacak veri bulunmamaktadır.");
       return;
     }
-    const worksheet = XLSX.utils.json_to_sheet(results);
+    
+    const headers = [
+      'businessName',
+      'mainCategory',
+      'subCategory',
+      'phone',
+      'district',
+      'neighborhood',
+      'address',
+      'googleRating',
+      'googleMapsLink',
+      'googlePlaceId',
+      'coordinates'
+    ];
+    
+    const dataForSheet = [
+        headers,
+        ...results.map(business => [
+            business.businessName,
+            business.mainCategory,
+            business.subCategory,
+            business.phone || '',
+            business.district,
+            business.neighborhood,
+            business.address,
+            business.googleRating,
+            business.googleMapsLink,
+            business.googlePlaceId || '',
+            business.coordinates || ''
+        ])
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "İşletmeler");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "İşletmeler", true);
+    
+    worksheet['!cols'] = [
+      { wch: 30 }, // businessName
+      { wch: 20 }, // mainCategory
+      { wch: 20 }, // subCategory
+      { wch: 15 }, // phone
+      { wch: 15 }, // district
+      { wch: 20 }, // neighborhood
+      { wch: 40 }, // address
+      { wch: 12 }, // googleRating
+      { wch: 40 }, // googleMapsLink
+      { wch: 30 }, // googlePlaceId
+      { wch: 25 }, // coordinates
+    ];
+
     XLSX.writeFile(workbook, "isletme_bulucu_sonuclari.xlsx");
   };
   
