@@ -7,7 +7,6 @@ import Button from './components/Button';
 import LoadingSpinner from './components/LoadingSpinner';
 import ResultsTable from './components/ResultsTable';
 import SearchHistory from './components/SearchHistory';
-import ThemeSwitcher from './components/ThemeSwitcher';
 
 declare const XLSX: any;
 
@@ -111,6 +110,18 @@ const App: React.FC = () => {
   const handleClearHistory = () => {
       setSearchHistory([]);
       localStorage.removeItem('businessSearchHistory');
+  };
+  
+  const handleClear = () => {
+    setProvince('');
+    setDistrict('');
+    setNeighborhood('');
+    setMainCategory('');
+    setSubCategory('');
+    setResults([]);
+    setError(null);
+    setSearchHasRun(false);
+    setSearchProgress(null);
   };
 
   const initAudioAndNotifications = async () => {
@@ -397,6 +408,7 @@ const App: React.FC = () => {
   
   const isSearchDisabled = !province || !district || !apiKey;
   const isExportDisabled = results.length === 0 || loading;
+  const isClearDisabled = !province && !district && !neighborhood && !mainCategory && !subCategory && results.length === 0 && !error;
 
   const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -413,6 +425,12 @@ const App: React.FC = () => {
   const ClipboardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2-2Z" />
+    </svg>
+  );
+
+  const RefreshIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.664 0l3.181-3.183m-4.991-2.691V5.25a2.25 2.25 0 0 0-2.25-2.25h-4.5a2.25 2.25 0 0 0-2.25 2.25v4.5A2.25 2.25 0 0 0 6.75 12h4.5a2.25 2.25 0 0 0 2.25-2.25V9.348Z" />
     </svg>
   );
 
@@ -478,7 +496,9 @@ const App: React.FC = () => {
               <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon} className="w-full">
                 XLSX İndir
               </Button>
-              <ThemeSwitcher className="w-full" />
+              <Button onClick={handleClear} disabled={isClearDisabled || loading} variant="secondary" Icon={RefreshIcon} className="w-full">
+                Temizle
+              </Button>
             </div>
           </div>
 
