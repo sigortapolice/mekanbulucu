@@ -48,42 +48,41 @@ const ThemeSwitcher: React.FC<{ className?: string }> = ({ className }) => {
         return 'system';
     });
 
-    // Effect to apply theme class and update localStorage when `theme` state changes.
     useEffect(() => {
         const root = window.document.documentElement;
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        if (theme === 'dark' || (theme === 'system' && systemPrefersDark)) {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
+        const applyTheme = () => {
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (theme === 'dark' || (theme === 'system' && systemPrefersDark)) {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
+        };
+
+        applyTheme();
 
         if (theme === 'system') {
             localStorage.removeItem('theme');
         } else {
             localStorage.setItem('theme', theme);
         }
-    }, [theme]);
 
-    // Effect to listen for OS-level theme changes, runs only once on mount.
-    useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         
-        const handleChange = (e: MediaQueryListEvent) => {
-            // Only update if the current theme is 'system' (i.e., no theme in localStorage)
-            if (!localStorage.getItem('theme')) {
-                if (e.matches) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            }
+        const handleSystemThemeChange = () => {
+             // This handler is only active when theme is 'system', so we can just re-apply.
+            applyTheme();
         };
 
-        mediaQuery.addEventListener('change', handleChange);
-        return () => mediaQuery.removeEventListener('change', handleChange);
-    }, []);
+        if (theme === 'system') {
+            mediaQuery.addEventListener('change', handleSystemThemeChange);
+        }
+
+        return () => {
+            mediaQuery.removeEventListener('change', handleSystemThemeChange);
+        };
+    }, [theme]);
     
     const handleThemeChange = () => {
         setTheme(currentTheme => THEME_CONFIG[currentTheme].next);
