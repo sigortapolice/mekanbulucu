@@ -138,6 +138,27 @@ const App: React.FC = () => {
     };
   };
 
+  const showCompletionNotification = async (resultCount: number) => {
+    if (!('Notification' in window)) {
+      console.warn('This browser does not support desktop notification');
+      return;
+    }
+  
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+  
+    if (permission === 'granted') {
+      const notificationTitle = 'Tarama Tamamlandı!';
+      const notificationOptions = {
+        body: `İşletme arama işlemi bitti. ${resultCount} sonuç bulundu.`,
+        icon: '/favicon.svg'
+      };
+      new Notification(notificationTitle, notificationOptions);
+    }
+  };
+
   const handleSearch = async () => {
     if (!province || !district) {
       setError("Arama yapmak için en azından İl ve İlçe seçmelisiniz.");
@@ -242,6 +263,7 @@ const App: React.FC = () => {
     setLoading(false);
     setSearchProgress(null);
     playCompletionSound();
+    showCompletionNotification(uniqueResults.size);
   };
 
   const handleExport = () => {
