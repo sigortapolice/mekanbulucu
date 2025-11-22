@@ -34,7 +34,7 @@ export const findBusinessesStream = async ({
     } else if (mainCategory) {
         taskDescription = `Find every single business under the '${mainCategory}' main category`;
     } else {
-        taskDescription = `Find every single business`;
+        taskDescription = `Find ALL businesses. To ensure comprehensive results, you must search for a wide variety of common business types. For example, search for 'restoran', 'mağaza', 'market', 'otel', 'kafe', 'eczane', 'okul', 'banka', 'tamirhane', and any other business type you can identify in the area. Your goal is to be completely exhaustive.`;
     }
 
     const mainCategorySchemaValue = mainCategory ? `"${mainCategory}"` : `"string (deduce from business type if possible, otherwise 'Diğer')"`;
