@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Business, Option, SearchHistoryItem } from './types';
 import { PROVINCES, DISTRICTS, MAIN_CATEGORIES, SUB_CATEGORIES, NEIGHBORHOODS } from './constants';
 import { findBusinessesStream } from './services/geminiService';
@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [searchHasRun, setSearchHasRun] = useState(false);
   const [searchProgress, setSearchProgress] = useState<{ current: number; total: number; neighborhood: string } | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
 
   const districtOptions = useMemo(() => province ? DISTRICTS[province] || [] : [], [province]);
@@ -112,13 +113,39 @@ const App: React.FC = () => {
       localStorage.removeItem('businessSearchHistory');
   };
 
+  const initAudioAndNotifications = async () => {
+    // Initialize AudioContext on user gesture to comply with autoplay policies
+    try {
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContext) {
+          audioContextRef.current = new AudioContext();
+        }
+      }
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+    } catch (e) {
+      console.error("Could not initialize AudioContext:", e);
+    }
+
+    // Request notification permission on user gesture
+    if ('Notification' in window && Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (e) {
+        console.error("Could not request notification permission:", e);
+      }
+    }
+  };
+
+
   const playCompletionSound = () => {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) {
-      console.warn("Web Audio API is not supported by this browser.");
+    const audioContext = audioContextRef.current;
+    if (!audioContext) {
+      console.warn("Web Audio API is not supported or was not initialized.");
       return;
     }
-    const audioContext = new AudioContext();
     
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -132,24 +159,15 @@ const App: React.FC = () => {
     
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.15); // Beep for 150ms
-
-    oscillator.onended = () => {
-      audioContext.close().catch(e => console.error("Error closing AudioContext", e));
-    };
   };
 
-  const showCompletionNotification = async (resultCount: number) => {
+  const showCompletionNotification = (resultCount: number) => {
     if (!('Notification' in window)) {
       console.warn('This browser does not support desktop notification');
       return;
     }
   
-    let permission = Notification.permission;
-    if (permission === 'default') {
-      permission = await Notification.requestPermission();
-    }
-  
-    if (permission === 'granted') {
+    if (Notification.permission === 'granted') {
       const notificationTitle = 'Tarama Tamamlandı!';
       const notificationOptions = {
         body: `İşletme arama işlemi bitti. ${resultCount} sonuç bulundu.`,
@@ -160,6 +178,9 @@ const App: React.FC = () => {
   };
 
   const handleSearch = async () => {
+    // First, initialize APIs that require a user gesture
+    await initAudioAndNotifications();
+
     if (!province || !district) {
       setError("Arama yapmak için en azından İl ve İlçe seçmelisiniz.");
       return;
