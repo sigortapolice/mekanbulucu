@@ -86,7 +86,7 @@ const ThemeSwitcher: React.FC<{ className?: string }> = ({ className }) => {
     };
 
     const { Icon, label } = THEME_CONFIG[theme];
-    const baseClasses = "inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:focus:ring-zinc-500 transition-colors duration-200 text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600";
+    const baseClasses = "inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none transition-colors duration-200 text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600";
 
     return (
         <button
