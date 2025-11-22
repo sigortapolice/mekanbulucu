@@ -42,6 +42,17 @@ export const findBusinessesStream = async ({
         3.  Your task is considered a COMPLETE FAILURE if you return only a small sample (e.g., less than 50 results for a common category in a populated area). The goal is absolute completeness for the given area.
         4.  For every single business found, extract the following data with zero modification.
 
+        **CRITICAL DATA POINT: \`googlePlaceId\`**
+        - The \`googlePlaceId\` MUST be the official, unique alphanumeric identifier provided by Google Maps for the location.
+        - A correct ID looks like this: \`ChIJ2WNudJE-yhQR8bLodpWKNbQ\`.
+        - It is NEVER a short number, a business name, or a generic string.
+        - If the tool does not provide a valid Place ID for a business, you MUST return \`null\` for this field. Do NOT invent a value.
+
+        **CRITICAL DATA POINT: \`coordinates\`**
+        - You MUST extract the precise geographic coordinates (latitude and longitude).
+        - Format them as a single string: 'latitude, longitude'. Example: '40.19252, 29.15224'.
+        - If coordinates are not available, you MUST return \`null\`.
+
         **JSON Schema (Mandatory):**
         {
           "businessName": "string",
@@ -53,7 +64,8 @@ export const findBusinessesStream = async ({
           "address": "string",
           "googleRating": "number | null",
           "googleMapsLink": "string",
-          "googlePlaceId": "string"
+          "googlePlaceId": "string | null",
+          "coordinates": "string | null"
         }
 
         **ABSOLUTE PROHIBITIONS:**

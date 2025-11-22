@@ -9,7 +9,8 @@ export interface Business {
   address: string;
   googleRating: number | null;
   googleMapsLink: string;
-  googlePlaceId: string;
+  googlePlaceId: string | null;
+  coordinates: string | null;
 }
 
 export interface Option {

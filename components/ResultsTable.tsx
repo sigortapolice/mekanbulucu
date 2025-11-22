@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Business } from '../types';
 
 interface ResultsTableProps {
@@ -13,6 +13,19 @@ const StarIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 
 const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (id: string | null) => {
+    if (!id) return;
+    navigator.clipboard.writeText(id).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }).catch(err => {
+      console.error('Place ID kopyalanamadı: ', err);
+      alert('ID kopyalanamadı.');
+    });
+  };
+
   return (
     <div>
       <div className="p-4 border-b border-gray-200 bg-gray-50/50 sm:rounded-t-lg">
@@ -30,6 +43,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adres</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Koordinatlar</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Puan</th>
                 </tr>
               </thead>
@@ -40,8 +54,14 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
                       <div className="text-sm font-medium text-gray-900">{business.businessName}</div>
                       <a href={business.googleMapsLink} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-900">Google Haritalar'da Görüntüle</a>
                       {business.googlePlaceId && (
-                        <div className="text-xs text-gray-500 mt-1 select-all">
-                          Place ID: <code className="bg-gray-100 px-1 py-0.5 rounded text-gray-800">{business.googlePlaceId}</code>
+                        <div 
+                          className="text-xs text-gray-500 mt-1 cursor-pointer"
+                          onClick={() => handleCopy(business.googlePlaceId)}
+                          title="Kopyalamak için tıkla"
+                        >
+                          Place ID: <code className="bg-gray-100 px-1 py-0.5 rounded text-gray-800 hover:bg-gray-200 transition-colors">
+                            {copiedId === business.googlePlaceId ? 'Kopyalandı!' : business.googlePlaceId}
+                          </code>
                         </div>
                       )}
                     </td>
@@ -53,6 +73,13 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{business.neighborhood}, {business.district}</div>
                       <div className="text-xs text-gray-500 max-w-xs truncate">{business.address}</div>
+                    </td>
+                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {business.coordinates ? (
+                            <a href={`https://www.google.com/maps?q=${business.coordinates}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900">
+                                {business.coordinates}
+                            </a>
+                        ) : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {business.googleRating ? (
