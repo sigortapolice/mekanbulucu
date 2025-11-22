@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { SearchHistoryItem } from '../types';
 
@@ -26,12 +25,12 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({ history, onSelect, onClea
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg">
+    <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Geçmiş Aramalar</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Geçmiş Aramalar</h3>
         <button
           onClick={onClear}
-          className="inline-flex items-center text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
+          className="inline-flex items-center text-sm font-medium text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400 transition-colors"
           aria-label="Arama geçmişini temizle"
         >
           <TrashIcon className="w-4 h-4 mr-1.5" />
@@ -43,18 +42,18 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({ history, onSelect, onClea
           <div
             key={item.id}
             onClick={() => onSelect(item)}
-            className="p-4 border border-gray-200 rounded-md hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-colors"
+            className="p-4 border border-gray-200 dark:border-zinc-700 rounded-md hover:bg-indigo-50 dark:hover:bg-zinc-800 hover:border-indigo-300 dark:hover:border-indigo-700 cursor-pointer transition-colors"
           >
             <div className="flex flex-col sm:flex-row justify-between sm:items-center">
               <div>
-                <p className="font-semibold text-gray-900">
+                <p className="font-semibold text-gray-900 dark:text-gray-100">
                   {item.subCategoryLabel}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {item.provinceLabel} &gt; {item.districtLabel} &gt; {item.neighborhoodLabel}
                 </p>
               </div>
-              <div className="flex items-center text-xs text-gray-500 mt-2 sm:mt-0">
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-500 mt-2 sm:mt-0">
                 <ClockIcon className="w-4 h-4 mr-1.5"/>
                 {new Date(item.timestamp).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </div>

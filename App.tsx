@@ -7,6 +7,7 @@ import Button from './components/Button';
 import LoadingSpinner from './components/LoadingSpinner';
 import ResultsTable from './components/ResultsTable';
 import SearchHistory from './components/SearchHistory';
+import ThemeSwitcher from './components/ThemeSwitcher';
 
 declare const XLSX: any;
 
@@ -318,18 +319,18 @@ const App: React.FC = () => {
 
   const ClipboardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2-2Z" />
     </svg>
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Query Screen */}
         <div className="lg:col-span-1 space-y-8 lg:sticky lg:top-8 self-start">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <div className="mb-6 pb-6 border-b border-gray-200">
-                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow">
+            <div className="mb-6 pb-6 border-b border-gray-200 dark:border-zinc-700">
+                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Google AI Studio API Anahtarı
                 </label>
                 <div className="flex flex-col sm:flex-row items-stretch gap-2">
@@ -339,15 +340,15 @@ const App: React.FC = () => {
                         value={tempApiKey}
                         onChange={handleApiKeyChange}
                         placeholder="API Anahtarınızı buraya yapıştırın"
-                        className="flex-grow block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                        className="flex-grow block w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-200"
                     />
                     <Button onClick={handleSaveApiKey} disabled={!tempApiKey}>
                         Anahtarı Kaydet
                     </Button>
                 </div>
-                 <p className="mt-2 text-xs text-gray-500">
+                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                     API anahtarınız tarayıcınızın yerel depolama alanına kaydedilecektir. 
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline ml-1">
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline ml-1">
                         Buradan bir API anahtarı alabilirsiniz.
                     </a>
                 </p>
@@ -363,27 +364,28 @@ const App: React.FC = () => {
               <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={[{ value: '', label: 'Tümü' }, ...subCategoryOptions]} placeholder="Alt Kategori Seçin" disabled={!mainCategory || !apiKey || loading} />
             </div>
             {error && (
-                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md text-center">
-                    <p className="text-sm font-medium text-red-800">{error}</p>
+                <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-md text-center">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300">{error}</p>
                     {error.includes("kota") && (
-                        <p className="mt-2 text-xs text-red-700">
+                        <p className="mt-2 text-xs text-red-700 dark:text-red-400">
                             Bu durum genellikle ücretsiz kullanım katmanındaki istek limitlerinden kaynaklanır. 
-                            <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900"> Oran limitleri</a> hakkında daha fazla bilgi alabilir 
-                            veya <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900">kullanımınızı buradan</a> izleyebilirsiniz.
+                            <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900 dark:hover:text-red-200"> Oran limitleri</a> hakkında daha fazla bilgi alabilir 
+                            veya <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900 dark:hover:text-red-200">kullanımınızı buradan</a> izleyebilirsiniz.
                         </p>
                     )}
                 </div>
             )}
-            <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
-              <Button onClick={handleSearch} disabled={isSearchDisabled || loading} Icon={SearchIcon}>
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <Button onClick={handleSearch} disabled={isSearchDisabled || loading} Icon={SearchIcon} className="w-full">
                 {loading ? 'Aranıyor...' : 'Bul'}
               </Button>
-              <Button onClick={handleCopyToClipboard} disabled={isExportDisabled} variant="secondary" Icon={ClipboardIcon}>
+              <Button onClick={handleCopyToClipboard} disabled={isExportDisabled} variant="secondary" Icon={ClipboardIcon} className="w-full">
                 Panoya Kopyala
               </Button>
-              <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon}>
+              <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon} className="w-full">
                 XLSX İndir
               </Button>
+              <ThemeSwitcher className="w-full" />
             </div>
           </div>
 
@@ -392,7 +394,7 @@ const App: React.FC = () => {
         
         {/* Right Column: Results Screen */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-lg h-full">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow h-full">
             {loading && <LoadingSpinner progressText={searchProgress ? `Aranıyor: ${searchProgress.neighborhood} (${searchProgress.current}/${searchProgress.total})` : undefined} />}
             
             {(searchHasRun || results.length > 0) && !loading && <ResultsTable businesses={results} />}
@@ -400,8 +402,8 @@ const App: React.FC = () => {
             {!loading && !searchHasRun && (
               <div className="flex items-center justify-center h-full min-h-[300px]">
                 <div className="text-center py-10 px-4">
-                   <h3 className="text-lg font-medium text-gray-900">{apiKey ? "Aramaya Hazır" : "Başlamak için API Anahtarınızı Girin"}</h3>
-                   <p className="mt-1 text-sm text-gray-500">
+                   <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{apiKey ? "Aramaya Hazır" : "Başlamak için API Anahtarınızı Girin"}</h3>
+                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                       {apiKey ? "Sonuçları görmek için yukarıdaki filtreleri kullanarak bir arama yapın." : "Lütfen arama yapabilmek için yukarıdaki alana Google AI Studio API anahtarınızı girip kaydedin."}
                    </p>
                 </div>
@@ -411,8 +413,8 @@ const App: React.FC = () => {
             {!loading && searchHasRun && results.length === 0 && (
                 <div className="flex items-center justify-center h-full min-h-[300px]">
                   <div className="text-center py-10 px-4">
-                      <h3 className="text-lg font-medium text-gray-900">Sonuç Bulunamadı</h3>
-                      <p className="mt-1 text-sm text-gray-500">Aramanızla eşleşen işletme bulunamadı veya arama sırasında bir hata oluştu. Lütfen filtrelerinizi kontrol edip tekrar deneyin.</p>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Sonuç Bulunamadı</h3>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Aramanızla eşleşen işletme bulunamadı veya arama sırasında bir hata oluştu. Lütfen filtrelerinizi kontrol edip tekrar deneyin.</p>
                   </div>
                 </div>
             )}

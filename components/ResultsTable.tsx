@@ -15,41 +15,41 @@ const StarIcon: React.FC<{ className?: string }> = ({ className }) => (
 const ResultsTable: React.FC<ResultsTableProps> = ({ businesses }) => {
   return (
     <div>
-      <div className="p-4 border-b border-gray-200 bg-gray-50/50 sm:rounded-t-lg">
-          <h3 className="text-md font-semibold text-gray-800">
+      <div className="p-4 border-b border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800/20 sm:rounded-t-lg">
+          <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200">
               Arama Sonuçları ({businesses.length} işletme bulundu)
           </h3>
       </div>
       <div className="overflow-x-auto">
         <div className="align-middle inline-block min-w-full">
-          <div className="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-b-lg">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="shadow-sm overflow-hidden border-b border-gray-200 dark:border-zinc-700 sm:rounded-b-lg">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+              <thead className="bg-gray-50 dark:bg-zinc-800">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşletme Adı</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adres</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Puan</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">İşletme Adı</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Telefon</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Adres</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Puan</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700">
                 {businesses.map((business, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
+                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{business.businessName}</div>
-                      <a href={business.googleMapsLink} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-900">Google Haritalar'da Görüntüle</a>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{business.businessName}</div>
+                      <a href={business.googleMapsLink} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Google Haritalar'da Görüntüle</a>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{business.mainCategory}</div>
-                      <div className="text-xs text-gray-500">{business.subCategory}</div>
+                      <div className="text-sm text-gray-900 dark:text-gray-100">{business.mainCategory}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{business.subCategory}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{business.phone || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{business.phone || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{business.neighborhood}, {business.district}</div>
-                      <div className="text-xs text-gray-500 max-w-xs truncate">{business.address}</div>
+                      <div className="text-sm text-gray-900 dark:text-gray-100">{business.neighborhood}, {business.district}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">{business.address}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {business.googleRating ? (
                           <div className="flex items-center">
                               <StarIcon className="w-4 h-4 text-yellow-400 mr-1" />
