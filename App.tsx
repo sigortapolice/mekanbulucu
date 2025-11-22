@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Business, Option } from './types';
+import type { Business, Option, SearchHistoryItem } from './types';
 import { PROVINCES, DISTRICTS, MAIN_CATEGORIES, SUB_CATEGORIES, NEIGHBORHOODS } from './constants';
 import { findBusinessesStream } from './services/geminiService';
 import SelectDropdown from './components/SelectDropdown';
 import Button from './components/Button';
 import LoadingSpinner from './components/LoadingSpinner';
 import ResultsTable from './components/ResultsTable';
+import SearchHistory from './components/SearchHistory';
 
 declare const XLSX: any;
 
@@ -25,6 +26,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchHasRun, setSearchHasRun] = useState(false);
   const [searchProgress, setSearchProgress] = useState<{ current: number; total: number; neighborhood: string } | null>(null);
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
 
 
   const districtOptions = useMemo(() => province ? DISTRICTS[province] || [] : [], [province]);
@@ -42,6 +44,10 @@ const App: React.FC = () => {
     if (savedApiKey) {
       setApiKey(savedApiKey);
       setTempApiKey(savedApiKey);
+    }
+    const savedHistory = localStorage.getItem('businessSearchHistory');
+    if (savedHistory) {
+      setSearchHistory(JSON.parse(savedHistory));
     }
   }, []);
   
@@ -68,6 +74,41 @@ const App: React.FC = () => {
     alert('API Anahtarı kaydedildi!');
   };
 
+  const handleSaveSearch = () => {
+    const provinceLabel = PROVINCES.find(p => p.value === province)?.label || '';
+    const districtLabel = DISTRICTS[province]?.find(d => d.value === district)?.label || '';
+    const neighborhoodLabel = NEIGHBORHOODS[province]?.[district]?.find(n => n.value === neighborhood)?.label || 'Tümü';
+    const mainCategoryLabel = MAIN_CATEGORIES.find(c => c.value === mainCategory)?.label || '';
+    const subCategoryLabel = SUB_CATEGORIES[mainCategory]?.find(s => s.value === subCategory)?.label || '';
+
+    const newSearchItem: SearchHistoryItem = {
+      id: new Date().toISOString(),
+      timestamp: Date.now(),
+      province, district, neighborhood, mainCategory, subCategory,
+      provinceLabel, districtLabel, neighborhoodLabel, mainCategoryLabel, subCategoryLabel
+    };
+
+    const updatedHistory = [newSearchItem, ...searchHistory.filter(item => 
+        !(item.province === province && item.district === district && item.neighborhood === neighborhood && item.mainCategory === mainCategory && item.subCategory === subCategory)
+    )].slice(0, 10);
+
+    setSearchHistory(updatedHistory);
+    localStorage.setItem('businessSearchHistory', JSON.stringify(updatedHistory));
+  };
+  
+  const handleSelectHistoryItem = (item: SearchHistoryItem) => {
+      setProvince(item.province);
+      setDistrict(item.district);
+      setNeighborhood(item.neighborhood);
+      setMainCategory(item.mainCategory);
+      setSubCategory(item.subCategory);
+  };
+
+  const handleClearHistory = () => {
+      setSearchHistory([]);
+      localStorage.removeItem('businessSearchHistory');
+  };
+
   const handleSearch = async () => {
     if (!province || !district || !mainCategory || !subCategory) {
       setError("Lütfen İl, İlçe, Ana Kategori ve Alt Kategori alanlarını doldurun.");
@@ -78,6 +119,7 @@ const App: React.FC = () => {
       return;
     }
     
+    handleSaveSearch();
     setLoading(true);
     setResults([]);
     setSearchHasRun(true);
@@ -176,17 +218,12 @@ const App: React.FC = () => {
 
     const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
 
-    // FIX: Explicitly set the number format for the 'googleRating' column (H)
-    // to prevent Excel from auto-formatting it as a date (e.g., 4.3 becoming 03-Apr).
     for (let i = 0; i < results.length; i++) {
-      // Data rows in the sheet start from row 2 (1-based index), after the header row.
       const cellAddress = `H${i + 2}`;
       const cell = worksheet[cellAddress];
-
-      // Check if the cell exists and contains a numeric value before applying formatting.
       if (cell && typeof cell.v === 'number') {
-        cell.t = 'n'; // Explicitly set the type to 'number'.
-        cell.z = '0.0'; // Apply a number format string for one decimal place.
+        cell.t = 'n';
+        cell.z = '0.0';
       }
     }
 
@@ -194,15 +231,8 @@ const App: React.FC = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "İşletmeler", true);
     
     worksheet['!cols'] = [
-      { wch: 30 }, // businessName
-      { wch: 20 }, // mainCategory
-      { wch: 20 }, // subCategory
-      { wch: 15 }, // phone
-      { wch: 15 }, // district
-      { wch: 20 }, // neighborhood
-      { wch: 40 }, // address
-      { wch: 12 }, // googleRating
-      { wch: 40 }, // googleMapsLink
+      { wch: 30 }, { wch: 20 }, { wch: 20 }, { wch: 15 },
+      { wch: 15 }, { wch: 20 }, { wch: 40 }, { wch: 12 }, { wch: 40 }
     ];
 
     XLSX.writeFile(workbook, "isletme_bulucu_sonuclari.xlsx");
@@ -215,27 +245,14 @@ const App: React.FC = () => {
     }
 
     const headers = [
-      'businessName',
-      'mainCategory',
-      'subCategory',
-      'phone',
-      'district',
-      'neighborhood',
-      'address',
-      'googleRating',
-      'googleMapsLink'
+      'businessName', 'mainCategory', 'subCategory', 'phone', 'district',
+      'neighborhood', 'address', 'googleRating', 'googleMapsLink'
     ];
     
     const dataToCopy = results.map(business => [
-        business.businessName,
-        business.mainCategory,
-        business.subCategory,
-        business.phone || '',
-        business.district,
-        business.neighborhood,
-        business.address,
-        business.googleRating ?? '',
-        business.googleMapsLink,
+        business.businessName, business.mainCategory, business.subCategory,
+        business.phone || '', business.district, business.neighborhood,
+        business.address, business.googleRating ?? '', business.googleMapsLink,
     ]);
 
     const tsvContent = [headers, ...dataToCopy]
@@ -272,93 +289,91 @@ const App: React.FC = () => {
     </svg>
   );
 
-
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="">
-        <main>
-          <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
-            <div className="mb-6 pb-6 border-b border-gray-200">
-                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
-                    Google AI Studio API Anahtarı
-                </label>
-                <div className="flex flex-col sm:flex-row items-stretch gap-2">
-                    <input
-                        type="password"
-                        id="apiKey"
-                        value={tempApiKey}
-                        onChange={handleApiKeyChange}
-                        placeholder="API Anahtarınızı buraya yapıştırın"
-                        className="flex-grow block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
-                    />
-                    <Button onClick={handleSaveApiKey} disabled={!tempApiKey}>
-                        Anahtarı Kaydet
-                    </Button>
-                </div>
-                 <p className="mt-2 text-xs text-gray-500">
-                    API anahtarınız tarayıcınızın yerel depolama alanına kaydedilecektir. 
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline ml-1">
-                        Buradan bir API anahtarı alabilirsiniz.
-                    </a>
-                </p>
-            </div>
-
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-              <SelectDropdown id="province" label="İl" value={province} onChange={(e) => setProvince(e.target.value)} options={PROVINCES} placeholder="İl Seçin" disabled={!apiKey || loading}/>
-              <SelectDropdown id="district" label="İlçe" value={district} onChange={(e) => setDistrict(e.target.value)} options={districtOptions} placeholder="İlçe Seçin" disabled={!province || !apiKey || loading} />
-              <SelectDropdown id="neighborhood" label="Mahalle" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} options={neighborhoodOptions} placeholder="Mahalle Seçin (Tümü)" disabled={!district || !apiKey || loading} />
-              <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={MAIN_CATEGORIES} placeholder="Ana Kategori Seçin" disabled={!apiKey || loading} />
-              <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={subCategoryOptions} placeholder="Alt Kategori Seçin" disabled={!mainCategory || !apiKey || loading} />
-            </div>
-            {error && (
-                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md text-center">
-                    <p className="text-sm font-medium text-red-800">{error}</p>
-                    {error.includes("kota") && (
-                        <p className="mt-2 text-xs text-red-700">
-                            Bu durum genellikle ücretsiz kullanım katmanındaki istek limitlerinden kaynaklanır. 
-                            <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900"> Oran limitleri</a> hakkında daha fazla bilgi alabilir 
-                            veya <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900">kullanımınızı buradan</a> izleyebilirsiniz.
-                        </p>
-                    )}
-                </div>
-            )}
-            <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
-              <Button onClick={handleSearch} disabled={isSearchDisabled || loading} Icon={SearchIcon}>
-                {loading ? 'Aranıyor...' : 'Bul'}
-              </Button>
-              <Button onClick={handleCopyToClipboard} disabled={isExportDisabled} variant="secondary" Icon={ClipboardIcon}>
-                Panoya Kopyala
-              </Button>
-              <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon}>
-                XLSX İndir
-              </Button>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-lg">
-            {loading && <LoadingSpinner progressText={searchProgress ? `Aranıyor: ${searchProgress.neighborhood} (${searchProgress.current}/${searchProgress.total})` : undefined} />}
-            
-            {(searchHasRun || results.length > 0) && !loading && <ResultsTable businesses={results} />}
-
-            {!loading && !searchHasRun && (
-              <div className="text-center py-10 px-4">
-                 <h3 className="text-lg font-medium text-gray-900">{apiKey ? "Aramaya Hazır" : "Başlamak için API Anahtarınızı Girin"}</h3>
-                 <p className="mt-1 text-sm text-gray-500">
-                    {apiKey ? "Sonuçları görmek için yukarıdaki filtreleri kullanarak bir arama yapın." : "Lütfen arama yapabilmek için yukarıdaki alana Google AI Studio API anahtarınızı girip kaydedin."}
-                 </p>
+      <main>
+        <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
+          <div className="mb-6 pb-6 border-b border-gray-200">
+              <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
+                  Google AI Studio API Anahtarı
+              </label>
+              <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                  <input
+                      type="password"
+                      id="apiKey"
+                      value={tempApiKey}
+                      onChange={handleApiKeyChange}
+                      placeholder="API Anahtarınızı buraya yapıştırın"
+                      className="flex-grow block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                  />
+                  <Button onClick={handleSaveApiKey} disabled={!tempApiKey}>
+                      Anahtarı Kaydet
+                  </Button>
               </div>
-            )}
-            
-            {!loading && searchHasRun && results.length === 0 && (
-                <div className="text-center py-10 px-4">
-                    <h3 className="text-lg font-medium text-gray-900">Sonuç Bulunamadı</h3>
-                    <p className="mt-1 text-sm text-gray-500">Aramanızla eşleşen işletme bulunamadı veya arama sırasında bir hata oluştu. Lütfen filtrelerinizi kontrol edip tekrar deneyin.</p>
-                </div>
-            )}
+               <p className="mt-2 text-xs text-gray-500">
+                  API anahtarınız tarayıcınızın yerel depolama alanına kaydedilecektir. 
+                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline ml-1">
+                      Buradan bir API anahtarı alabilirsiniz.
+                  </a>
+              </p>
           </div>
-        </main>
-      </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <SelectDropdown id="province" label="İl" value={province} onChange={(e) => setProvince(e.target.value)} options={PROVINCES} placeholder="İl Seçin" disabled={!apiKey || loading}/>
+            <SelectDropdown id="district" label="İlçe" value={district} onChange={(e) => setDistrict(e.target.value)} options={districtOptions} placeholder="İlçe Seçin" disabled={!province || !apiKey || loading} />
+            <SelectDropdown id="neighborhood" label="Mahalle" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} options={neighborhoodOptions} placeholder="Mahalle Seçin (Tümü)" disabled={!district || !apiKey || loading} />
+            <SelectDropdown id="mainCategory" label="Ana Kategori" value={mainCategory} onChange={(e) => setMainCategory(e.target.value)} options={MAIN_CATEGORIES} placeholder="Ana Kategori Seçin" disabled={!apiKey || loading} />
+            <SelectDropdown id="subCategory" label="Alt Kategori" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} options={subCategoryOptions} placeholder="Alt Kategori Seçin" disabled={!mainCategory || !apiKey || loading} />
+          </div>
+          {error && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md text-center">
+                  <p className="text-sm font-medium text-red-800">{error}</p>
+                  {error.includes("kota") && (
+                      <p className="mt-2 text-xs text-red-700">
+                          Bu durum genellikle ücretsiz kullanım katmanındaki istek limitlerinden kaynaklanır. 
+                          <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900"> Oran limitleri</a> hakkında daha fazla bilgi alabilir 
+                          veya <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900">kullanımınızı buradan</a> izleyebilirsiniz.
+                      </p>
+                  )}
+              </div>
+          )}
+          <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <Button onClick={handleSearch} disabled={isSearchDisabled || loading} Icon={SearchIcon}>
+              {loading ? 'Aranıyor...' : 'Bul'}
+            </Button>
+            <Button onClick={handleCopyToClipboard} disabled={isExportDisabled} variant="secondary" Icon={ClipboardIcon}>
+              Panoya Kopyala
+            </Button>
+            <Button onClick={handleExport} disabled={isExportDisabled} variant="secondary" Icon={DownloadIcon}>
+              XLSX İndir
+            </Button>
+          </div>
+        </div>
+
+        {!loading && <SearchHistory history={searchHistory} onSelect={handleSelectHistoryItem} onClear={handleClearHistory} />}
+        
+        <div className="bg-white rounded-lg shadow-lg mt-8">
+          {loading && <LoadingSpinner progressText={searchProgress ? `Aranıyor: ${searchProgress.neighborhood} (${searchProgress.current}/${searchProgress.total})` : undefined} />}
+          
+          {(searchHasRun || results.length > 0) && !loading && <ResultsTable businesses={results} />}
+
+          {!loading && !searchHasRun && (
+            <div className="text-center py-10 px-4">
+               <h3 className="text-lg font-medium text-gray-900">{apiKey ? "Aramaya Hazır" : "Başlamak için API Anahtarınızı Girin"}</h3>
+               <p className="mt-1 text-sm text-gray-500">
+                  {apiKey ? "Sonuçları görmek için yukarıdaki filtreleri kullanarak bir arama yapın." : "Lütfen arama yapabilmek için yukarıdaki alana Google AI Studio API anahtarınızı girip kaydedin."}
+               </p>
+            </div>
+          )}
+          
+          {!loading && searchHasRun && results.length === 0 && (
+              <div className="text-center py-10 px-4">
+                  <h3 className="text-lg font-medium text-gray-900">Sonuç Bulunamadı</h3>
+                  <p className="mt-1 text-sm text-gray-500">Aramanızla eşleşen işletme bulunamadı veya arama sırasında bir hata oluştu. Lütfen filtrelerinizi kontrol edip tekrar deneyin.</p>
+              </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 };
